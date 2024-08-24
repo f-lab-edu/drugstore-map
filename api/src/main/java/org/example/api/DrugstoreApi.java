@@ -12,22 +12,36 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DrugstoreApi {
-    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-        String url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
-                + "?serviceKey=서비스키" /*Service Key*/
-                + "&numOfRows=100" /*한 페이지 결과 수*/
-                + "&pageNo=1"; /*페이지 번호*/
+    private final String page = "&pageNo=";  //페이지 번호
+    private final int rowSize = 1000;        //한 페이지 결과 수
+    String url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
+            + "?serviceKey=서비스키" /*Service Key*/
+            + "&numOfRows=" + rowSize;
 
+    /**
+     * 전체 페이지 크기를 반환하는 메서드
+     */
+    public int getPageSize() throws ParserConfigurationException, SAXException, IOException {
+        int totalCount = getTotalCount();
+        return totalCount / rowSize + 1;
+    }
+
+    /**
+     * 약국 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
+     */
+    public List<DrugstoreDto> getDrugstoreInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
+        List<DrugstoreDto> drugstoreDtoList = new ArrayList<>();
+        String realUrl = url + page + pageNo;
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
-        Document parse = db.parse(url);
+        Document parse = db.parse(realUrl);
 
         parse.getDocumentElement().normalize();
-        String totalCount = parse.getElementsByTagName("totalCount").item(0).getTextContent();  //전체 개수 반환
-
         NodeList nodeList = parse.getElementsByTagName("item");
 
         for (int i = 0; i < nodeList.getLength(); i++) {
@@ -35,21 +49,31 @@ public class DrugstoreApi {
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
                 DrugstoreDto drugstoreDto = DrugstoreDto.builder()
-                        .code(XmlUtils.getStringFromElement("ykiho",element))
-                        .name(XmlUtils.getStringFromElement("yadmNm",element))
-                        .address(XmlUtils.getStringFromElement("addr",element))
-                        .phoneNumber(XmlUtils.getPhoneNumberFromElement("telno",element))
-                        .typeName(XmlUtils.getStringFromElement("clCdNm",element))
-                        .postNumber(XmlUtils.getStringFromElement("postNo",element))
-                        .stateName(XmlUtils.getStringFromElement("sidoCdNm",element))
-                        .cityName(XmlUtils.getStringFromElement("sgguCdNm",element))
-                        .emdongName(XmlUtils.getStringFromElement("emdongNm",element))
+                        .code(XmlUtils.getStringFromElement("ykiho", element))
+                        .name(XmlUtils.getStringFromElement("yadmNm", element))
+                        .address(XmlUtils.getStringFromElement("addr", element))
+                        .phoneNumber(XmlUtils.getPhoneNumberFromElement("telno", element))
+                        .typeName(XmlUtils.getStringFromElement("clCdNm", element))
+                        .postNumber(XmlUtils.getStringFromElement("postNo", element))
+                        .stateName(XmlUtils.getStringFromElement("sidoCdNm", element))
+                        .cityName(XmlUtils.getStringFromElement("sgguCdNm", element))
+                        .emdongName(XmlUtils.getStringFromElement("emdongNm", element))
                         .xPos(XmlUtils.getStringFromElement("XPos", element))
                         .yPos(XmlUtils.getStringFromElement("YPos", element))
                         .build();
-
-                System.out.println(drugstoreDto);
+                drugstoreDtoList.add(drugstoreDto);
             }
         }
+        return drugstoreDtoList;
+    }
+
+    private int getTotalCount() throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document parse = db.parse(url);
+
+        parse.getDocumentElement().normalize();
+        String totalCount = parse.getElementsByTagName("totalCount").item(0).getTextContent();
+        return Integer.parseInt(totalCount);
     }
 }
