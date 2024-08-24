@@ -17,8 +17,9 @@ public class DrugstoreApi {
     public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         String url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
                 + "?serviceKey=서비스키" /*Service Key*/
-                + "&pageNo=1" /*페이지 번호*/
-                + "&numOfRows=10"; /*한 페이지 결과 수*/
+                + "&numOfRows=100" /*한 페이지 결과 수*/
+                + "&pageNo=1"; /*페이지 번호*/
+
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -28,6 +29,7 @@ public class DrugstoreApi {
         String totalCount = parse.getElementsByTagName("totalCount").item(0).getTextContent();  //전체 개수 반환
 
         NodeList nodeList = parse.getElementsByTagName("item");
+
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -36,7 +38,7 @@ public class DrugstoreApi {
                         .code(XmlUtils.getStringFromElement("ykiho",element))
                         .name(XmlUtils.getStringFromElement("yadmNm",element))
                         .address(XmlUtils.getStringFromElement("addr",element))
-                        .phoneNumber(XmlUtils.getPhoneNumberFromElement(element))
+                        .phoneNumber(XmlUtils.getPhoneNumberFromElement("telno",element))
                         .typeName(XmlUtils.getStringFromElement("clCdNm",element))
                         .postNumber(XmlUtils.getStringFromElement("postNo",element))
                         .stateName(XmlUtils.getStringFromElement("sidoCdNm",element))
