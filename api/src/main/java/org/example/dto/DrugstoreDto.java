@@ -13,7 +13,7 @@ public class DrugstoreDto {
     private String name;            //요양기관명
     private String address;         //주소
     private String phoneNumber;     //전화번호
-    private String typeName;        //종별코드명
+    private String typeName;        //종별코드명 (확인필요)
     private String postNumber;      //우편번호
     private String stateName;       //시도코드명
     private String cityName;        //시군구코드명
