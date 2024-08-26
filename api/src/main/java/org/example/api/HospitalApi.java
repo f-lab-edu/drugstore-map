@@ -1,7 +1,11 @@
 package org.example.api;
 
+import jakarta.annotation.PostConstruct;
+import org.example.config.KeyInfo;
 import org.example.dto.HospitalDto;
 import org.example.utility.XmlUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -15,20 +19,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO: @Component
-//TODO: 전체 데이터 받아오도록 변경 혹은 1000개만 받아오도록 변경 후 다른 단에서 반복문 실행
 //TODO: key 숨기기
 //TODO: 예외 처리
-
+@Component
 public class HospitalApi {
+    @Autowired
+    KeyInfo keyInfo;
+
     private final String page = "&pageNo="; //페이지 번호
     private final int rowSize = 1000;       //한 페이지 결과 수
-    private final String url = "http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"  //URL
-            + "?serviceKey=서비스키"    //Service Key
-            + "&numOfRows=" + rowSize;
+    private String url;
+
+    @PostConstruct
+    public void init() {
+        this.url = "http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"  //URL
+                + "?serviceKey=" + keyInfo.getServerKey()    //Service Key
+                + "&numOfRows=" + rowSize;
+    }
+
 
     // TODO: 예외처리
-
     /**
      * 전체 페이지 크기를 반환하는 메서드
      */

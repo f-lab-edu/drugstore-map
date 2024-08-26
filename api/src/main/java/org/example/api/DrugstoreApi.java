@@ -1,7 +1,11 @@
 package org.example.api;
 
+import jakarta.annotation.PostConstruct;
+import org.example.config.KeyInfo;
 import org.example.dto.DrugstoreDto;
 import org.example.utility.XmlUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -15,12 +19,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DrugstoreApi {
+    @Autowired
+    KeyInfo keyInfo;
     private final String page = "&pageNo=";  //페이지 번호
     private final int rowSize = 1000;        //한 페이지 결과 수
-    String url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
-            + "?serviceKey=서비스키" /*Service Key*/
-            + "&numOfRows=" + rowSize;
+    private String url;
+
+    @PostConstruct
+    public void init() {
+        this.url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
+                + "?serviceKey=" + keyInfo.getServerKey() /*Service Key*/
+                + "&numOfRows=" + rowSize;
+    }
 
     /**
      * 전체 페이지 크기를 반환하는 메서드
@@ -36,6 +48,7 @@ public class DrugstoreApi {
     public List<DrugstoreDto> getDrugstoreInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
         List<DrugstoreDto> drugstoreDtoList = new ArrayList<>();
         String realUrl = url + page + pageNo;
+        System.out.println(keyInfo.getServerKey());
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
