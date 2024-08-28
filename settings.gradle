@@ -12,6 +12,6 @@ plugins {
 
 rootProject.name = 'drugstore-map'
 include('app')
-include 'api'
-include 'api'
+include 'openapi'
+
 
