@@ -1,10 +1,9 @@
 package org.healthmap.openapi.api;
 
-import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyInfo;
 import org.healthmap.openapi.dto.DrugstoreDto;
 import org.healthmap.openapi.utility.XmlUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -20,15 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@Slf4j
 public class DrugstoreApi {
-    @Autowired
-    KeyInfo keyInfo;
-    private final String page = "&pageNo=";  //페이지 번호
-    private final int rowSize = 1000;        //한 페이지 결과 수
+    private final KeyInfo keyInfo;
+    private final String page;  //페이지 번호
+    private final int rowSize;        //한 페이지 결과 수
     private String url;
 
-    @PostConstruct
-    public void init() {
+    public DrugstoreApi(KeyInfo keyInfo) {
+        this.keyInfo = keyInfo;
+        this.page = "&pageNo=";
+        this.rowSize = 1000;
         this.url = "http://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList" /*URL*/
                 + "?serviceKey=" + keyInfo.getServerKey() /*Service Key*/
                 + "&numOfRows=" + rowSize;
@@ -48,7 +49,6 @@ public class DrugstoreApi {
     public List<DrugstoreDto> getDrugstoreInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
         List<DrugstoreDto> drugstoreDtoList = new ArrayList<>();
         String realUrl = url + page + pageNo;
-        System.out.println(keyInfo.getServerKey());
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -61,22 +61,24 @@ public class DrugstoreApi {
             Node node = nodeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
-                DrugstoreDto drugstoreDto = DrugstoreDto.builder()
-                        .code(XmlUtils.getStringFromElement("ykiho", element))
-                        .name(XmlUtils.getStringFromElement("yadmNm", element))
-                        .address(XmlUtils.getStringFromElement("addr", element))
-                        .phoneNumber(XmlUtils.getPhoneNumberFromElement("telno", element))
-                        .typeName(XmlUtils.getStringFromElement("clCdNm", element))
-                        .postNumber(XmlUtils.getStringFromElement("postNo", element))
-                        .stateName(XmlUtils.getStringFromElement("sidoCdNm", element))
-                        .cityName(XmlUtils.getStringFromElement("sgguCdNm", element))
-                        .emdongName(XmlUtils.getStringFromElement("emdongNm", element))
-                        .xPos(XmlUtils.getStringFromElement("XPos", element))
-                        .yPos(XmlUtils.getStringFromElement("YPos", element))
-                        .build();
+                String code = XmlUtils.getStringFromElement("ykiho", element);
+                String name = XmlUtils.getStringFromElement("yadmNm", element);
+                String address = XmlUtils.getStringFromElement("addr", element);
+                String phoneNumber = XmlUtils.getPhoneNumberFromElement("telno", element);
+                String typeName = XmlUtils.getStringFromElement("clCdNm", element);
+                String postNumber = XmlUtils.getStringFromElement("postNo", element);
+                String stateName = XmlUtils.getStringFromElement("sidoCdNm", element);
+                String cityName = XmlUtils.getStringFromElement("sgguCdNm", element);
+                String emdongName = XmlUtils.getStringFromElement("emdongNm", element);
+                String xPos = XmlUtils.getStringFromElement("XPos", element);
+                String yPos = XmlUtils.getStringFromElement("YPos", element);
+                DrugstoreDto drugstoreDto = new DrugstoreDto(
+                        code, name, address, phoneNumber, typeName, postNumber, stateName, cityName, emdongName, xPos, yPos
+                );
                 drugstoreDtoList.add(drugstoreDto);
             }
         }
+        log.info("drugstoreDtoList size: {}", drugstoreDtoList.size());
         return drugstoreDtoList;
     }
 
