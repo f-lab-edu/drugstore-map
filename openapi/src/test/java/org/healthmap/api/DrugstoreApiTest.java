@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.healthmap.openapi.api.DrugstoreApi;
 import org.healthmap.openapi.config.KeyInfo;
 import org.healthmap.openapi.config.PropertiesConfig;
-import org.healthmap.openapi.dto.DrugstoreDto;
+import org.healthmap.openapi.dto.MedicalInfoDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ class DrugstoreApiTest {
     @Test
     @DisplayName("데이터를 가져오는지 확인")
     public void getDrugstoreDtoList() throws IOException, ParserConfigurationException, SAXException {
-        List<DrugstoreDto> drugstoreDtoList = drugstoreApi.getDrugstoreInfo(1);
+        List<MedicalInfoDto> drugstoreDtoList = drugstoreApi.getDrugstoreInfo(1);
 
         // then
         Assertions.assertThat(drugstoreDtoList).isNotEmpty();

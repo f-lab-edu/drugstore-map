@@ -2,7 +2,7 @@ package org.healthmap.openapi.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyInfo;
-import org.healthmap.openapi.dto.HospitalDto;
+import org.healthmap.openapi.dto.MedicalInfoDto;
 import org.healthmap.openapi.utility.XmlUtils;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
@@ -25,7 +25,7 @@ public class HospitalApi {
     private final KeyInfo keyInfo;
     private final String page;//페이지 번호
     private final int rowSize;       //한 페이지 결과 수
-    private String url;
+    private final String url;
 
     public HospitalApi(KeyInfo keyInfo) {
         this.keyInfo = keyInfo;
@@ -51,8 +51,8 @@ public class HospitalApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
-    public List<HospitalDto> getHospitalInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
-        List<HospitalDto> hospitalDtoList = new ArrayList<>();
+    public List<MedicalInfoDto> getHospitalInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
+        List<MedicalInfoDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + page + pageNo;   //실제 호출할 URL
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -70,7 +70,7 @@ public class HospitalApi {
                 String name = XmlUtils.getStringFromElement("yadmNm", element);
                 String address = XmlUtils.getStringFromElement("addr", element);
                 String phoneNumber = XmlUtils.getPhoneNumberFromElement("telno", element);
-                String hospitalUrl = getHospitalUrlFromElement(element);
+                String pageUrl = getHospitalUrlFromElement(element);
                 String typeName = XmlUtils.getStringFromElement("clCdNm", element);
                 String postNumber = XmlUtils.getStringFromElement("postNo", element);
                 String stateName = XmlUtils.getStringFromElement("sidoCdNm", element);
@@ -78,13 +78,14 @@ public class HospitalApi {
                 String emdongName = XmlUtils.getStringFromElement("emdongNm", element);
                 String xPos = XmlUtils.getStringFromElement("XPos", element);
                 String yPos = XmlUtils.getStringFromElement("YPos", element);
-                HospitalDto hospitalDto = new HospitalDto(
-                        code, name, address, phoneNumber, hospitalUrl, postNumber, typeName, stateName, cityName, emdongName, xPos, yPos
+                MedicalInfoDto hospitalDto = new MedicalInfoDto(
+                        code, name, address, phoneNumber, pageUrl, postNumber, typeName, stateName, cityName, emdongName, xPos, yPos
                 );
                 hospitalDtoList.add(hospitalDto);
             }
         }
         log.info("hospitalDtoList size: {}", hospitalDtoList.size());
+        log.info("hospitalDtoList.get(0): {}", hospitalDtoList.get(0));
         return hospitalDtoList;
     }
 
