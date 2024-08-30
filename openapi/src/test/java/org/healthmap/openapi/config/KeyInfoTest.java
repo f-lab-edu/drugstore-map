@@ -1,8 +1,6 @@
-package org.healthmap.config;
+package org.healthmap.openapi.config;
 
 import org.assertj.core.api.Assertions;
-import org.healthmap.openapi.config.KeyInfo;
-import org.healthmap.openapi.config.PropertiesConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

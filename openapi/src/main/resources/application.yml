@@ -2,3 +2,13 @@ spring:
   profiles:
     include:
       - secret
+  datasource:
+    url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: 유저이름     # 숨기기
+    password: 비밀번호
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create  # 나중에 제거
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect

@@ -8,7 +8,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @Getter
 @ToString   // 차후 필요없게되면 삭제 예정
-public class MedicalInfoDto {
+public class MedicalFacilityDto {
     private String code;        //암호화 요양 기호
     private String name;        //요양기관명(병원명)
     private String address;     //주소
@@ -22,7 +22,7 @@ public class MedicalInfoDto {
     private String xPos;
     private String yPos;
 
-    public MedicalInfoDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, String xPos, String yPos) {
+    public MedicalFacilityDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, String xPos, String yPos) {
         this.code = code;
         this.name = name;
         this.address = address;

@@ -1,10 +1,9 @@
-package org.healthmap.api;
+package org.healthmap.openapi.api;
 
 import org.assertj.core.api.Assertions;
-import org.healthmap.openapi.api.HospitalApi;
 import org.healthmap.openapi.config.KeyInfo;
 import org.healthmap.openapi.config.PropertiesConfig;
-import org.healthmap.openapi.dto.MedicalInfoDto;
+import org.healthmap.openapi.dto.MedicalFacilityDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ class HospitalApiTest {
     @Test
     @DisplayName("데이터 가져오는지 확인")
     public void getHospitalDtoList() throws Exception {
-        List<MedicalInfoDto> hospitalDtoList = hospitalApi.getHospitalInfo(1);
+        List<MedicalFacilityDto> hospitalDtoList = hospitalApi.getHospitalInfo(1);
 
         // then
         Assertions.assertThat(hospitalDtoList).isNotEmpty();

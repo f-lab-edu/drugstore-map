@@ -2,7 +2,7 @@ package org.healthmap.openapi.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyInfo;
-import org.healthmap.openapi.dto.MedicalInfoDto;
+import org.healthmap.openapi.dto.MedicalFacilityDto;
 import org.healthmap.openapi.utility.XmlUtils;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
@@ -51,8 +51,8 @@ public class HospitalApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
-    public List<MedicalInfoDto> getHospitalInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
-        List<MedicalInfoDto> hospitalDtoList = new ArrayList<>();
+    public List<MedicalFacilityDto> getHospitalInfo(int pageNo) throws IOException, ParserConfigurationException, SAXException {
+        List<MedicalFacilityDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + page + pageNo;   //실제 호출할 URL
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -78,7 +78,7 @@ public class HospitalApi {
                 String emdongName = XmlUtils.getStringFromElement("emdongNm", element);
                 String xPos = XmlUtils.getStringFromElement("XPos", element);
                 String yPos = XmlUtils.getStringFromElement("YPos", element);
-                MedicalInfoDto hospitalDto = new MedicalInfoDto(
+                MedicalFacilityDto hospitalDto = new MedicalFacilityDto(
                         code, name, address, phoneNumber, pageUrl, postNumber, typeName, stateName, cityName, emdongName, xPos, yPos
                 );
                 hospitalDtoList.add(hospitalDto);
