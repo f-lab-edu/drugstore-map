@@ -3,8 +3,12 @@ package org.healthmap.openapi.api;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyProperties;
 import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.openapi.error.OpenApiErrorCode;
 import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.healthmap.openapi.utility.XmlUtils;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -13,6 +17,7 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,15 +26,15 @@ import java.util.List;
 @Component
 public class MedicalFacilityApi {
     private final KeyProperties keyInfo;
-    private final String page;//페이지 번호
-    private final int rowSize;       //한 페이지 결과 수
+    private final String page;          //페이지 번호
+    private final int rowSize;          //한 페이지 결과 수
     private final String serviceKey;
     private final String numOfRows;
 
     public MedicalFacilityApi(KeyProperties keyInfo) {
         this.keyInfo = keyInfo;
         this.page = "&pageNo=";
-        this.rowSize = 1000;
+        this.rowSize = 30000;
         this.serviceKey = "?serviceKey=" + keyInfo.getServerKey();
         this.numOfRows = "&numOfRows=" + rowSize;
     }
@@ -48,7 +53,7 @@ public class MedicalFacilityApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
-    public List<MedicalFacilityDto> getHospitalInfo(String url, int pageNo) {
+    public List<MedicalFacilityDto> getMedicalFacilityInfo(String url, int pageNo) {
         List<MedicalFacilityDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
 
@@ -76,19 +81,30 @@ public class MedicalFacilityApi {
                     String emdongName = XmlUtils.getStringFromElement("emdongNm", element);
                     String xPos = XmlUtils.getStringFromElement("XPos", element);
                     String yPos = XmlUtils.getStringFromElement("YPos", element);
-                    MedicalFacilityDto hospitalDto = new MedicalFacilityDto(
-                            code, name, address, phoneNumber, pageUrl, postNumber, typeName, stateName, cityName, emdongName, xPos, yPos
+                    Point coordinate = getPointFromXYPos(xPos, yPos);
+
+                    MedicalFacilityDto medicalFacilityDto = new MedicalFacilityDto(
+                            code, name, address, phoneNumber, pageUrl, postNumber, typeName, stateName, cityName, emdongName, coordinate
                     );
-                    hospitalDtoList.add(hospitalDto);
+                    hospitalDtoList.add(medicalFacilityDto);
                 }
             }
+        } catch (IOException ie) {
+            throw new OpenApiProblemException(OpenApiErrorCode.INPUT_OUTPUT_ERROR);
         } catch (Exception e) {
-            throw new OpenApiProblemException(e);
+            throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
         }
-
-        log.info("hospitalDtoList size: {}", hospitalDtoList.size());
-        log.info("hospitalDtoList.get(0): {}", hospitalDtoList.get(0));
         return hospitalDtoList;
+    }
+
+    private Point getPointFromXYPos(String xPos, String yPos) {
+        if (xPos == null || yPos == null) {
+            return null;
+        }
+        GeometryFactory geometryFactory = new GeometryFactory();
+        double x = Double.parseDouble(xPos);
+        double y = Double.parseDouble(yPos);
+        return geometryFactory.createPoint(new Coordinate(x, y));
     }
 
     //데이터 전체 개수를 반환하는 메서드
@@ -102,8 +118,10 @@ public class MedicalFacilityApi {
             parse.getDocumentElement().normalize();
             String totalCount = parse.getElementsByTagName("totalCount").item(0).getTextContent();
             return Integer.parseInt(totalCount);
+        } catch (IOException ie) {
+            throw new OpenApiProblemException(OpenApiErrorCode.INPUT_OUTPUT_ERROR);
         } catch (Exception e) {
-            throw new OpenApiProblemException(e);
+            throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
         }
     }
 

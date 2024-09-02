@@ -26,7 +26,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("데이터 가져오는지 확인")
         public void getHospitalDtoList() {
-            List<MedicalFacilityDto> hospitalDtoList = hospitalApi.getHospitalInfo(urlProperties.getHospitalUrl(), 1);
+            List<MedicalFacilityDto> hospitalDtoList = hospitalApi.getMedicalFacilityInfo(urlProperties.getHospitalUrl(), 1);
 
             // then
             Assertions.assertThat(hospitalDtoList).isNotEmpty();
@@ -48,7 +48,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("DrugstoreUrl으로부터 데이터 가져오는지 확인")
         public void getDrugstoreDtoList() {
-            List<MedicalFacilityDto> drugstoreDtoList = hospitalApi.getHospitalInfo(urlProperties.getDrugstoreUrl(), 1);
+            List<MedicalFacilityDto> drugstoreDtoList = hospitalApi.getMedicalFacilityInfo(urlProperties.getDrugstoreUrl(), 1);
 
             // then
             Assertions.assertThat(drugstoreDtoList).isNotEmpty();

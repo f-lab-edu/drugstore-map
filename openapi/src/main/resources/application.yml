@@ -4,12 +4,16 @@ spring:
       - secret
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
     username: root
 #    password: application-secret.yml 에 위치
 
   jpa:
     hibernate:
       ddl-auto: create  # 나중에 제거
-    show-sql: true
+#    show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 1000
