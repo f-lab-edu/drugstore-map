@@ -5,10 +5,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @ConfigurationProperties(prefix = "key")
-public class KeyInfo {
+public class KeyProperties {
     private final String serverKey;
 
-    public KeyInfo(String serverKey) {
+    public KeyProperties(String serverKey) {
         this.serverKey = serverKey;
     }
 }
