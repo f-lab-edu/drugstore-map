@@ -1,5 +1,6 @@
 package org.healthmap.openapi.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityEntity;
@@ -22,10 +23,12 @@ public class MedicalFacilityService {
     private final MedicalFacilityApi medicalFacilityApi;
 
     // 기본 병원, 약국 정보 저장
+    @Transactional
     public int saveAllMedicalFacility() {
         List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
         List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(allDtoList);
-        medicalFacilityRepository.saveAll(entityList);
+//        medicalFacilityRepository.saveAll(entityList);
+        medicalFacilityRepository.customSaveAll(entityList);
         return entityList.size();
     }
 
