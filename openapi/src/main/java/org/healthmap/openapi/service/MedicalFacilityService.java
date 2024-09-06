@@ -27,8 +27,8 @@ public class MedicalFacilityService {
     public int saveAllMedicalFacility() {
         List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
         List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(allDtoList);
-//        medicalFacilityRepository.saveAll(entityList);
-        medicalFacilityRepository.customSaveAll(entityList);
+        medicalFacilityRepository.saveAll(entityList);
+//        medicalFacilityRepository.customSaveAll(entityList);
         return entityList.size();
     }
 
