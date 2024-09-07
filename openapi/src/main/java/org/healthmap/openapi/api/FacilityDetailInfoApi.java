@@ -19,7 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FacilityDetailInfoApi {
-    public static void main(String args[]) throws IOException, SAXException, ParserConfigurationException {
+    public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
         String url = "http://apis.data.go.kr/B551182/MadmDtlInfoService2.7/getDtlInfo2.7"
                 + "?serviceKey=" + "서비스키"    //Service Key
                 + "&ykiho=암호요양기호";
@@ -45,11 +45,13 @@ public class FacilityDetailInfoApi {
                 String treatmentSat = XmlUtils.getTreatmentTimeFromElement("trmtSatStart", "trmtSatEnd", element);
                 String treatmentSun = XmlUtils.getTreatmentTimeFromElement("trmtSunStart", "trmtSunEnd", element);
                 String receiveWeek = XmlUtils.getStringFromElement("rcvWeek", element);
+                receiveWeek = changeTimeFormat(receiveWeek);
                 String receiveSat = XmlUtils.getStringFromElement("rcvSat", element);
+                receiveSat = changeTimeFormat(receiveSat);
                 String lunchWeek = XmlUtils.getStringFromElement("lunchWeek", element);
-                changeTimeFormat(lunchWeek);
+                lunchWeek = changeTimeFormat(lunchWeek);
                 String lunchSat = XmlUtils.getStringFromElement("lunchSat", element);
-                changeTimeFormat(lunchSat);
+                lunchSat = changeTimeFormat(lunchSat);
                 String noTreatmentSun = XmlUtils.getStringFromElement("noTrmtSun", element);
                 noTreatmentSun = checkNoTreatment(noTreatmentSun);
 
@@ -89,19 +91,9 @@ public class FacilityDetailInfoApi {
         return dateTime;
     }
 
-    public static String changeTimeFormat(String lunchTime) {
-        String check1 = "오후1시~2시";
-        String check2 = "12:00 - 13:30";
-        String check3 = "1-15시";
-        String check4 = "오후 12시30분부터 2시까지";
-        String check5 = "오후01시부터";
-        String check6 = "09:08부터접수";
-
-        if (lunchTime == null) {
-            return null;
-        }
-        Set<String> noLunch = new HashSet<>(List.of("공란", "휴진", "없음", "휴무", "전체휴진", "오전진료", "무", "점심시간없음"));
-        Set<String> needContainCheck = new HashSet<>(List.of("점심시간따로없"));
+    public static String changeTimeFormat(String time) {
+        String no = "없음";
+        Set<String> noLunchOrReceive = new HashSet<>(List.of("공란", "휴진", "없음", "휴무", "전체휴진", "오전진료", "무", "점심시간없음"));
         Pattern timePattern1 = Pattern.compile("(오전|오후|아침)?(\\d{1,2})시(\\d{2}분?)?([-~])(오후|저녁)?(\\d{1,2})시(\\d{2}분?)?");      //13시(00)(분)-14시(00)(분)
         Pattern timePattern2 = Pattern.compile("(오전|오후|아침)?(\\d{1,2})([:;])(\\d{2})([-~])(오후|저녁)?(\\d{1,2})([:;])(\\d{2})");     //13(:|;)00(-|~)14(:|;)00, 1:00~2:00
         Pattern timePattern3 = Pattern.compile("(\\d{1,2})시?([-~])(\\d{1,2})시?");                           //ex) 13(시)-14(시), 01시-02시 등
@@ -109,223 +101,183 @@ public class FacilityDetailInfoApi {
         Pattern timePattern5 = Pattern.compile("(오전|오후|아침)?(\\d{1,2})시(\\d{2}분)?부터(접수)?");         //09시30분부터
         Pattern timePattern6 = Pattern.compile("(오전|오후|아침)?(\\d{1,2})[:;](\\d{2})부터(접수)?");         //09:30부터
 
-        check1 = check1.replaceAll(" ", "");        //띄어쓰기 제거
-        Matcher matcher = timePattern1.matcher(check1);
+
+        if (time == null) {
+            return null;
+        }
+
+        String timeCheck = time.replaceAll(" ", "");
+        if(noLunchOrReceive.contains(timeCheck)){    // 없는 경우
+            return no;
+        }
+
+        Matcher matcher = timePattern1.matcher(timeCheck);
         if (matcher.find()) {
             StringBuilder resultStr = new StringBuilder();
+            String startTimeAmPm = matcher.group(1);
             String startTime = matcher.group(2);
             String startMinute = matcher.group(3);
             String endTime = matcher.group(6);
             String endMinute = matcher.group(7);
 
-            if (startTime.length() == 2 && endTime.length() == 2) { // 5시를 기준으로 판단 (09시는 오전, 01시는 오후)
-                if (startTime.charAt(0) == '0') {
-                    if (Integer.parseInt(startTime) > 5) {
-                        resultStr.append(startTime);
-                    } else {
+            if(startTimeAmPm != null) {
+                if(startTimeAmPm.equals("오전") || startTimeAmPm.equals("아침")){
+                    resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
+                } else {        //오후
+                    if(startTime.length() == 1) {   // 1자리
+                        resultStr.append(String.format("%02d", Integer.parseInt(startTime) + 12));
+                    } else {                        // 2자리
+                        if(startTime.charAt(0) == '0') {        //ex) 01시
+                            resultStr.append(String.format("%02d", Integer.parseInt(startTime)+12));
+                        } else if(startTime.charAt(0) == '1') { //ex) 13시
+                            resultStr.append(startTime);
+                        }
+                    }
+                }
+            } else {
+                if(startTime.length() == 1) {
+                    if (Integer.parseInt(startTime) > 5) {      //ex) 9시
+                        resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
+                    } else {                                    //ex) 1시
                         resultStr.append((Integer.parseInt(startTime) + 12));
                     }
                 } else {
-                    resultStr.append(startTime);
+                    if (startTime.charAt(0) == '0') {
+                        if (Integer.parseInt(startTime) > 5) {  //ex) 09시
+                            resultStr.append(startTime);
+                        } else {                                //ex) 01시
+                            resultStr.append((Integer.parseInt(startTime) + 12));
+                        }
+                    } else if(startTime.charAt(0) == '1') {     //ex) 13시
+                        resultStr.append(startTime);
+                    }
                 }
-
-                if (startMinute != null) {           // 첫번째 minute
-                    resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                } else {
-                    resultStr.append(":00 - ");
-                }
-
+            }
+            // 시작 minute
+            if (startMinute != null) {
+                resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
+            } else {
+                resultStr.append(":00").append(" - ");
+            }
+            // 종료 hour
+            if (endTime.length() == 1) {
+                resultStr.append((Integer.parseInt(endTime) + 12));
+            } else {
                 if (endTime.charAt(0) == '0') {     // 두번째 hour
                     resultStr.append((Integer.parseInt(endTime) + 12));
-                } else {
+                } else if(endTime.charAt(0) == '1'){
                     resultStr.append(endTime);
                 }
-
-                if (endMinute != null) {            // 두번째 minute
-                    resultStr.append(":").append(endMinute.replace("분", ""));
-                } else {
-                    resultStr.append(":00");
-                }
-
-//            return resultStr;
-            } else if (startTime.length() == 1 && endTime.length() == 2) {
-                if (Integer.parseInt(startTime) > 5) {
-                    resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                } else {
-                    resultStr.append((Integer.parseInt(startTime) + 12));
-                }
-
-                if (startMinute != null) {
-                    resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                } else {
-                    resultStr.append(":00 - ");
-                }
-
-                if (endTime.charAt(0) == '0') {
-                    resultStr.append((Integer.parseInt(endTime) + 12));
-                } else {
-                    resultStr.append(endTime);
-                }
-
-                if (endMinute != null) {
-                    resultStr.append(":").append(endMinute.replace("분", ""));
-                } else {
-                    resultStr.append(":00");
-                }
-            } else if (startTime.length() == 2 && endTime.length() == 1) {
-                if (startTime.charAt(0) == '0') {
-                    if (Integer.parseInt(startTime) > 5) {
-                        resultStr.append(startTime);
-                    } else {
-                        resultStr.append((Integer.parseInt(startTime) + 12));
-                    }
-                } else {
-                    resultStr.append(startTime);
-                }
-
-                if (startMinute != null) {
-                    resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                } else {
-                    resultStr.append(":00 - ");
-                }
-
-                resultStr.append((Integer.parseInt(endTime) + 12));
-
-                if (endMinute != null) {
-                    resultStr.append(":").append(endMinute.replace("분", ""));
-                } else {
-                    resultStr.append(":00");
-                }
-                System.out.println(resultStr);
-            } else if (startTime.length() == 1 && endTime.length() == 1) {       //오전9시~오후5시30분
-                if (Integer.parseInt(startTime) > 5) {
-                    resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                } else {
-                    resultStr.append((Integer.parseInt(startTime) + 12));
-                }
-
-                if (startMinute != null) {
-                    resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                } else {
-                    resultStr.append(":00 - ");
-                }
-
-                resultStr.append((Integer.parseInt(endTime) + 12));
-                if (endMinute != null) {
-                    resultStr.append(":").append(endMinute.replace("분", ""));
-                } else {
-                    resultStr.append(":00");
-                }
-
+            }
+            // 종료 minute
+            if (endMinute != null) {
+                resultStr.append(":").append(endMinute.replace("분", ""));
+            } else {
+                resultStr.append(":00");
             }
 
-
             System.out.println("timePattern1 : " + resultStr.toString());
+            return resultStr.toString();
         }
 
-        check2 = check2.replaceAll(" ", "");
-        Matcher matcher2 = timePattern2.matcher(check2);
+        Matcher matcher2 = timePattern2.matcher(timeCheck);            // ok
         if (matcher2.find()) {
             StringBuilder resultStr = new StringBuilder();
+            String startTimeAmPm = matcher2.group(1);
             String startTime = matcher2.group(2);
             String startMinute = matcher2.group(4);
             String endTime = matcher2.group(7);
             String endMinute = matcher2.group(9);
 
-            if (startTime.length() == 1 && endTime.length() == 2) {
-                if (Integer.parseInt(startTime) > 5) {
+            if(startTimeAmPm != null) {
+                if(startTimeAmPm.equals("오전") || startTimeAmPm.equals("아침")){
                     resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                } else {
-                    resultStr.append((Integer.parseInt(startTime) + 12));
+                } else {        //오후
+                    if(startTime.length() == 1) {   // 1자리
+                        resultStr.append(String.format("%02d", Integer.parseInt(startTime) + 12));
+                    } else {                        // 2자리
+                        if(startTime.charAt(0) == '0') {        //ex) 01시
+                            resultStr.append(String.format("%02d", Integer.parseInt(startTime)+12));
+                        } else if(startTime.charAt(0) == '1') { //ex) 13시
+                            resultStr.append(startTime);
+                        }
+                    }
                 }
-                resultStr.append(":").append(startMinute).append(" - ");
-                if (endTime.charAt(0) == '0') {
-                    resultStr.append(Integer.parseInt(endTime) + 12);
-                } else {
-                    resultStr.append(endTime);
-                }
-                resultStr.append(":").append(endMinute);
-            } else if (startTime.length() == 1 && endTime.length() == 1) {
-                if (Integer.parseInt(startTime) > 5) {
-                    resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                } else {
-                    resultStr.append((Integer.parseInt(startTime) + 12));
-                }
-                resultStr.append(":").append(startMinute).append(" - ");
-                resultStr.append(String.format("%02d", Integer.parseInt(endTime) + 12));
-                resultStr.append(":").append(endMinute);
-            } else if (startTime.length() == 2 && endTime.length() == 1) {        // 01:00~1:20
-                if (startTime.charAt(0) == '0') {
-                    if (Integer.parseInt(startTime) > 5) {
+            } else {
+                if(startTime.length() == 1) {
+                    if (Integer.parseInt(startTime) > 5) {      //ex) 9시
                         resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                    } else {
+                    } else {                                    //ex) 1시
                         resultStr.append((Integer.parseInt(startTime) + 12));
                     }
                 } else {
-                    resultStr.append(startTime);
-                }
-                resultStr.append(":").append(startMinute).append(" - ");
-                resultStr.append(String.format("%02d", Integer.parseInt(endTime) + 12));
-                resultStr.append(":").append(endMinute);
-            } else if (startTime.length() == 2 && endTime.length() == 2) {
-                if (startTime.charAt(0) == '0') {
-                    if (Integer.parseInt(startTime) > 5) {
-                        resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                    } else {
-                        resultStr.append((Integer.parseInt(startTime) + 12));
+                    if (startTime.charAt(0) == '0') {
+                        if (Integer.parseInt(startTime) > 5) {  //ex) 09시
+                            resultStr.append(startTime);
+                        } else {                                //ex) 01시
+                            resultStr.append((Integer.parseInt(startTime) + 12));
+                        }
+                    } else if(startTime.charAt(0) == '1') {     //ex) 13시
+                        resultStr.append(startTime);
                     }
-                } else {
-                    resultStr.append(startTime);
                 }
-                resultStr.append(":").append(startMinute).append(" - ");
-                if (endTime.charAt(0) == '0') {
-                    resultStr.append(Integer.parseInt(endTime) + 12);
-                } else {
-                    resultStr.append(endTime);
-                }
-                resultStr.append(":").append(endMinute);
             }
+            resultStr.append(":").append(startMinute.replace("분","")).append(" - ");
 
+            if(endTime.length() == 1) {
+                resultStr.append((Integer.parseInt(endTime) + 12));
+            } else {
+                if (endTime.charAt(0) == '0') {
+                    resultStr.append(Integer.parseInt(endTime) + 12);
+                } else if(endTime.charAt(0) == '1') {
+                    resultStr.append(endTime);
+                }
+            }
+            resultStr.append(":").append(endMinute);
 
             System.out.println("timePattern2 : " + resultStr.toString());
-//            return resultStr;
+            return resultStr.toString();
         }
 
-        check3 = check3.replaceAll(" ", "");
-        Matcher matcher3 = timePattern3.matcher(check3);
+        Matcher matcher3 = timePattern3.matcher(timeCheck);            // ok
         if (matcher3.find()) {
+            StringBuilder resultStr = new StringBuilder();
             String startTime = matcher3.group(1);
             String endTime = matcher3.group(3);
-            String resultStr = "";
 
-            if (startTime.length() == 1 && endTime.length() == 1) {  // ex) 2시-3시
-                int startTimeInt = Integer.parseInt(startTime);
-                if (startTimeInt > 5) {
-                    startTime = String.format("%02d:00", startTimeInt);
-                } else {
-                    startTime = String.format("%02d:00", startTimeInt + 12);
+            if(startTime.length() == 1) {           // 1자리
+                if (Integer.parseInt(startTime) > 5) {      // 9:00
+                    resultStr.append(String.format("%02d:00 - ", Integer.parseInt(startTime)));
+                } else {                                    // 1:00
+                    resultStr.append(String.format("%02d:00 - ", Integer.parseInt(startTime) + 12));
                 }
-                resultStr = startTime + " - " + String.format("%02d:00", Integer.parseInt(endTime) + 12);
-            } else if (startTime.length() == 1 && endTime.length() == 2) {    //ex) 1시-14시
-                int startTimeInt = Integer.parseInt(startTime);
-                if (startTimeInt > 5) {
-                    startTime = String.format("%02d:00", startTimeInt);
-                } else {
-                    startTime = String.format("%02d:00", startTimeInt + 12);
+            } else {                                // 2자리
+                if (startTime.charAt(0) == '0') {
+                    if (Integer.parseInt(startTime) > 5) {  // 09:00
+                        resultStr.append(String.format("%02d:00 - ", Integer.parseInt(startTime)));
+                    } else {                                // 01:00
+                        resultStr.append(String.format("%02d:00 - ", Integer.parseInt(startTime) + 12));
+                    }
+                } else if (startTime.charAt(0) == '1'){                                    // 13:00
+                    resultStr.append(String.format("%02d:00 - ", Integer.parseInt(startTime)));
                 }
-                resultStr = startTime + " - " + String.format("%02d:00", Integer.parseInt(endTime));
-            } else if (startTime.length() == 2 && endTime.length() == 1) {
-                resultStr += startTime + ":00" + " - " + String.format("%02d:00", Integer.parseInt(endTime) + 12);
-            } else if (startTime.length() == 2 && endTime.length() == 2) {
-                resultStr += startTime + ":00" + " - " + endTime + ":00";
+            }
+
+            if(endTime.length() == 1) {                     // 3:00
+                resultStr.append(String.format("%02d:00", Integer.parseInt(endTime) + 12));
+            } else {
+                if (endTime.charAt(0) == '0') {             // 03:00
+                    resultStr.append(String.format("%02d:00", Integer.parseInt(endTime) + 12));
+                } else if (endTime.charAt(0) == '1'){       // 11:00, 17:00
+                    resultStr.append(String.format("%02d:00", Integer.parseInt(endTime)));
+                }
             }
 
             System.out.println("timePattern3 : " + resultStr);
-//            return resultStr;
+            return resultStr.toString();
         }
 
-        check4 = check4.replaceAll(" ", "");
-        Matcher matcher4 = timePattern4.matcher(check4);
+        Matcher matcher4 = timePattern4.matcher(timeCheck);            // ok
         if (matcher4.find()) {
             StringBuilder resultStr = new StringBuilder();
             String startTimeAmPm = matcher4.group(1);
@@ -335,110 +287,67 @@ public class FacilityDetailInfoApi {
             String endMinute = matcher4.group(6);
 
             if (startTimeAmPm != null) {
-                if (startTimeAmPm.equals("오전") || startTimeAmPm.equals("아침")) {
+                if (startTimeAmPm.equals("오전") || startTimeAmPm.equals("아침")) { // 오전 09시, 11시, 9시
                     resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
                 } else {
-                    if (startTime.length() == 2) {
-                        if (startTime.charAt(0) == '0') {        //ex) 오후 01시부터 02시까지
-                            resultStr.append(String.format("%02d", (Integer.parseInt(startTime) + 12)));
-                        } else {        //ex) 오후 13시부터 14시까지
-                            resultStr.append(startTime);
-                        }
-                    } else {
+                    if (startTime.length() == 1) {              //ex) 오후 1시
                         resultStr.append(String.format("%02d", Integer.parseInt(startTime) + 12));
-                    }
-                }
-                if (startMinute != null) {
-                    resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                } else {
-                    resultStr.append(":00").append(" - ");
-                }
-                if (endTime.length() == 2) {
-                    if (endTime.charAt(0) == '0') {
-                        resultStr.append(Integer.parseInt(endTime) + 12);
                     } else {
-                        resultStr.append(endTime);
-                    }
-                } else {
-                    resultStr.append(Integer.parseInt(endTime) + 12);
-                }
-                if (endMinute != null) {
-                    resultStr.append(":").append(endMinute.replace("분", ""));
-                } else {
-                    resultStr.append(":00");
-                }
-            } else {    // 처음 부분에 오전/오후가 없을시 1시부터 오후14시30분
-                if (startTime.length() == 2) {
-                    // 시간
-                    if (startTime.charAt(0) == '0') {
-                        if (Integer.parseInt(startTime) > 5) {
+                        if (startTime.charAt(0) == '0') {       //ex) 오후 01시
+                            resultStr.append(String.format("%02d", (Integer.parseInt(startTime) + 12)));
+                        } else {                                //ex) 오후 13시
                             resultStr.append(startTime);
-                        } else {
-                            resultStr.append((Integer.parseInt(startTime) + 12));
                         }
-                    } else {
-                        resultStr.append(startTime);
                     }
-                    // 분
-                    if (startMinute != null) {
-                        resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                    } else {
-                        resultStr.append(":00").append(" - ");
-                    }
-                    // 시간
-                    if (endTime.length() == 2) {
-                        if (endTime.charAt(0) == '0') {
-                            resultStr.append(Integer.parseInt(endTime) + 12);
-                        } else {
-                            resultStr.append(endTime);
-                        }
-                    } else {
-                        resultStr.append(Integer.parseInt(endTime) + 12);
-                    }
-                    // 분
-                    if (endMinute != null) {
-                        resultStr.append(":").append(endMinute.replace("분", ""));
-                    } else {
-                        resultStr.append(":00");
-                    }
-
-                } else {    //ex) 1시20분부터
-                    //시간
-                    if (Integer.parseInt(startTime) > 5) {
+                }
+            } else {                                            // (오전/오후)가 없을시
+                if (startTime.length() == 1) {          // 1자리
+                    if (Integer.parseInt(startTime) > 5) {      //ex) 9시
                         resultStr.append(String.format("%02d", Integer.parseInt(startTime)));
-                    } else {
+                    } else {                                    //ex) 1시
                         resultStr.append((Integer.parseInt(startTime) + 12));
                     }
-                    // 분
-                    if (startMinute != null) {
-                        resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
-                    } else {
-                        resultStr.append(":00").append(" - ");
-                    }
-                    // 시간
-                    if (endTime.length() == 2) {
-                        if (endTime.charAt(0) == '0') {
-                            resultStr.append(Integer.parseInt(endTime) + 12);
-                        } else {
-                            resultStr.append(endTime);
+                } else {                                // 2자리
+                    if (startTime.charAt(0) == '0') {
+                        if (Integer.parseInt(startTime) > 5) {  //ex) 09시
+                            resultStr.append(startTime);
+                        } else {                                //ex) 01시
+                            resultStr.append((Integer.parseInt(startTime) + 12));
                         }
-                    } else {
-                        resultStr.append(Integer.parseInt(endTime) + 12);
-                    }
-                    // 분
-                    if (endMinute != null) {
-                        resultStr.append(":").append(endMinute.replace("분", ""));
-                    } else {
-                        resultStr.append(":00");
+                    } else {                                    //ex) 13시
+                        resultStr.append(startTime);
                     }
                 }
             }
+            // start 분
+            if (startMinute != null) {
+                resultStr.append(":").append(startMinute.replace("분", "")).append(" - ");
+            } else {
+                resultStr.append(":00").append(" - ");
+            }
+
+            //end 시간
+            if (endTime.length() == 1) {
+                resultStr.append(Integer.parseInt(endTime) + 12);
+            } else {
+                if (endTime.charAt(0) == '0') {
+                    resultStr.append(Integer.parseInt(endTime) + 12);
+                } else {
+                    resultStr.append(endTime);
+                }
+            }
+            //end 분
+            if (endMinute != null) {
+                resultStr.append(":").append(endMinute.replace("분", ""));
+            } else {
+                resultStr.append(":00");
+            }
 
             System.out.println("timePattern4 : " + resultStr);
+            return resultStr.toString();
         }
 
-        check5 = check5.replaceAll(" ", "");
-        Matcher matcher5 = timePattern5.matcher(check5);
+        Matcher matcher5 = timePattern5.matcher(timeCheck);            // ok
         if (matcher5.find()) {        //(오전|오후)?(\d{1,2})시(\d{2}분)?부터(접수)?
             StringBuilder resultStr = new StringBuilder();
             String startTimeAmPm = matcher5.group(1);
@@ -452,7 +361,7 @@ public class FacilityDetailInfoApi {
                     if (startTime.length() == 2) {
                         if (startTime.charAt(0) == '0') {
                             resultStr.append(Integer.parseInt(startTime) + 12);
-                        } else {
+                        } else if(startTime.charAt(0) == '1'){
                             resultStr.append(startTime);
                         }
                     } else {
@@ -467,7 +376,7 @@ public class FacilityDetailInfoApi {
                         } else {                        //ex) 01시30분부터 -> 13:30 부터
                             resultStr.append(Integer.parseInt(startTime) + 12);
                         }
-                    } else {                            //ex) 15시30분부터 -> 15:30 부터
+                    } else if(startTime.charAt(0) == '1'){                            //ex) 15시30분부터 -> 15:30 부터
                         resultStr.append(startTime);
                     }
                 } else {
@@ -486,10 +395,10 @@ public class FacilityDetailInfoApi {
             }
 
             System.out.println("timePattern5 : " + resultStr);
+            return resultStr.toString();
         }
 
-        check6 = check6.replaceAll(" ", "");       // (오전|오후|아침)?(\d{1,2})[:;](\d{2}분)부터(접수)?
-        Matcher matcher6 = timePattern6.matcher(check6);
+        Matcher matcher6 = timePattern6.matcher(timeCheck);             // ok
         if (matcher6.find()) {
             StringBuilder resultStr = new StringBuilder();
             String startTimeAmPm = matcher6.group(1);
@@ -518,7 +427,7 @@ public class FacilityDetailInfoApi {
                         } else {                                // ex) 01:00부터
                             resultStr.append(Integer.parseInt(startTime) + 12);
                         }
-                    } else {                                    // ex) 11:00부터
+                    } else if(startTime.charAt(0) == '1'){                                    // ex) 11:00부터
                         resultStr.append(startTime);
                     }
                 } else {
@@ -532,8 +441,9 @@ public class FacilityDetailInfoApi {
             resultStr.append(":").append(startMinute).append(" 부터");
 
             System.out.println("timePattern6 : " + resultStr);
+            return resultStr.toString();
         }
 
-        return null;
+        return time;
     }
 }
