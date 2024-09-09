@@ -18,7 +18,7 @@ public class XmlUtils {
         if (item == null)
             return null;
 
-        return element.getElementsByTagName(tagName).item(0).getTextContent();
+        return item.getTextContent();
     }
 
     /**
@@ -39,5 +39,20 @@ public class XmlUtils {
         } else {
             return null;
         }
+    }
+
+    public static String getTreatmentTimeFromElement(String startTimeTag, String EndTimeTag, Element element) {
+        String startTime = getStringFromElement(startTimeTag, element);
+        if(startTime == null) {
+            return null;
+        }
+        String endTime = getStringFromElement(EndTimeTag, element);
+        if(endTime == null) {
+            return null;
+        }
+        String formattedStartTime = String.format("%s:%s", startTime.substring(0,2), startTime.substring(2,4));
+        String formattedEndTime = String.format("%s:%s", endTime.substring(0,2), endTime.substring(2,4));
+
+        return String.format("%s ~ %s", formattedStartTime, formattedEndTime);
     }
 }

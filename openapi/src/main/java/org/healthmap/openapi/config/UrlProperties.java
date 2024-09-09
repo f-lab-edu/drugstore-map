@@ -8,9 +8,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class UrlProperties {
     private final String drugstoreUrl;
     private final String hospitalUrl;
+    private final String detailUrl;
 
-    public UrlProperties(String drugstoreUrl, String hospitalUrl) {
+    public UrlProperties(String drugstoreUrl, String hospitalUrl, String detailUrl) {
         this.drugstoreUrl = drugstoreUrl;
         this.hospitalUrl = hospitalUrl;
+        this.detailUrl = detailUrl;
     }
 }
