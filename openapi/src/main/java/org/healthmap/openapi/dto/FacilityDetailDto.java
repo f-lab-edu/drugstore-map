@@ -47,8 +47,27 @@ public class FacilityDetailDto {
         this.emergencyNight = emergencyNight;
     }
 
-    public static FacilityDetailDto of(String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
-        return new FacilityDetailDto(parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun,noTreatmentHoliday, emergencyDay, emergencyNight);
+    public static FacilityDetailDto of(
+            String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
+            String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek,
+            String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday,
+            String emergencyDay, String emergencyNight
+    ) {
+        return new FacilityDetailDto(
+                parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
+                treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek,
+                receiveSat, lunchWeek, lunchSat, noTreatmentSun,noTreatmentHoliday,
+                emergencyDay, emergencyNight
+        );
+    }
+
+    public static FacilityDetailDto ofNull() {
+        return new FacilityDetailDto(
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null, null,
+                null, null
+        );
     }
 
 }

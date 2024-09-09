@@ -53,6 +53,6 @@ public class XmlUtils {
         String formattedStartTime = String.format("%s:%s", startTime.substring(0,2), startTime.substring(2,4));
         String formattedEndTime = String.format("%s:%s", endTime.substring(0,2), endTime.substring(2,4));
 
-        return String.format("%s - %s", formattedStartTime, formattedEndTime);
+        return String.format("%s ~ %s", formattedStartTime, formattedEndTime);
     }
 }
