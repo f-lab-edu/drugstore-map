@@ -43,11 +43,11 @@ public class XmlUtils {
 
     public static String getTreatmentTimeFromElement(String startTimeTag, String EndTimeTag, Element element) {
         String startTime = getStringFromElement(startTimeTag, element);
-        if(startTime == null) {
+        if(startTime == null || startTime.length() != 4) {
             return null;
         }
         String endTime = getStringFromElement(EndTimeTag, element);
-        if(endTime == null) {
+        if(endTime == null || endTime.length() != 4) {
             return null;
         }
         String formattedStartTime = String.format("%s:%s", startTime.substring(0,2), startTime.substring(2,4));

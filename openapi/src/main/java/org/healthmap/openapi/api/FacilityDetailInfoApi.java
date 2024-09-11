@@ -48,8 +48,7 @@ public class FacilityDetailInfoApi {
             parse.getDocumentElement().normalize();
             NodeList nodeList = parse.getElementsByTagName("item");
             if (nodeList.getLength() == 0) {
-                log.info("해당 암호 요양 기호로부터 받을 수 있는 내용이 없습니다 : {}", code);
-                facilityDetailDto = FacilityDetailDto.ofNull();
+                return null;
             }
 
             for (int i = 0; i < nodeList.getLength(); i++) {
@@ -77,22 +76,21 @@ public class FacilityDetailInfoApi {
 
                     String lunchWeek = XmlUtils.getStringFromElement("lunchWeek", element);
                     lunchWeek = checkNoLunch(lunchWeek);
-                    if (!lunchWeek.equals("없음")) {
+                    if (lunchWeek != null && !lunchWeek.equals("없음")) {
                         lunchWeek = changeTimeFormat(lunchWeek);
                     }
                     String lunchSat = XmlUtils.getStringFromElement("lunchSat", element);
                     lunchSat = checkNoLunch(lunchSat);
-                    if (!lunchSat.equals("없음")) {
+                    if (lunchSat != null && !lunchSat.equals("없음")) {
                         lunchSat = changeTimeFormat(lunchWeek);
                     }
 
                     String emergencyDay = XmlUtils.getStringFromElement("emyDayYn", element);
                     String emergencyNight = XmlUtils.getStringFromElement("emyNgtYn", element);
                     facilityDetailDto = FacilityDetailDto.of(
-                            parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
+                            code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                             receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday, emergencyDay, emergencyNight
                     );
-                    System.out.println(facilityDetailDto);
                 }
             }
         } catch (IOException ie) {
@@ -109,7 +107,7 @@ public class FacilityDetailInfoApi {
         String treatmentN = "휴진";
         Set<String> yesTreatment = new HashSet<>(List.of("정상근무", "정규진료", "진료", "휴진없음"));
         Set<String> noTreatment = new HashSet<>(
-                List.of("전부휴진", "모두휴진", "휴진", "휴무", "전부휴일", "전부휴무", "매주휴진", "종일휴진", "휴뮤", "휴진입니다.")
+                List.of("전부휴진", "모두휴진", "휴진", "휴무", "전부휴일", "전부휴무", "전체휴진", "매주휴진", "종일휴진", "휴뮤", "휴진입니다.")
         );
         if (dateTime == null) {
             return null;

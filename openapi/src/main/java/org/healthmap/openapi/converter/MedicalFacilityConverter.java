@@ -13,8 +13,10 @@ public class MedicalFacilityConverter {
     public static MedicalFacilityEntity toEntity(MedicalFacilityDto dto) {
         return Optional.ofNullable(dto)
                 .map(x -> MedicalFacilityEntity.of(
-                        dto.getCode(), dto.getName(), dto.getAddress(), dto.getPhoneNumber(), dto.getType(),
-                        dto.getState(), dto.getCity(), dto.getTown(), dto.getPostNumber(), dto.getCoordinate()))
+                        dto.getCode(), dto.getName(), dto.getAddress(), dto.getPhoneNumber(), dto.getPageUrl(), dto.getType(),
+                        dto.getState(), dto.getCity(), dto.getTown(), dto.getPostNumber(), dto.getCoordinate(),
+                        null, null, null, null, null, null, null, null,
+                        null,null, null, null, null, null, null, null, null))
                 .orElseThrow(() -> new OpenApiProblemException(OpenApiErrorCode.NULL_POINT));
     }
 

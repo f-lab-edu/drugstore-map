@@ -14,11 +14,18 @@ class MedicalFacilityServiceTest {
 
     @Test
     @DisplayName("전체 기본 정보를 저장한다")
-    @Transactional
+//    @Transactional
     public void saveAllMedicalFacility() {
-        int i =  medicalFacilityService.saveAllMedicalFacility();
-
+        int i = medicalFacilityService.saveAllMedicalFacility();
         Assertions.assertThat(i).isNotEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("없어진 병원 및 약국을 DB에서 삭제한다")
+    @Transactional
+    void getAllMedicalFacilityIdList() {
+        int deleted = medicalFacilityService.deleteMedicalFacilityList();
+        Assertions.assertThat(deleted).isNotEqualTo(0);
     }
 
 }

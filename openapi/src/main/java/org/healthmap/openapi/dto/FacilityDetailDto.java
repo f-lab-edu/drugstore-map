@@ -8,6 +8,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString   // 차후 필요없게될 시 삭제
 public class FacilityDetailDto {
+    private String code;            // ykiho(암호 요양 기호)
     private String parking;
     private String parkingEtc;
     private String treatmentMon;    // 진료시간_월
@@ -27,7 +28,8 @@ public class FacilityDetailDto {
     private String emergencyNight;
 
 
-    private FacilityDetailDto(String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
+    private FacilityDetailDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
+        this.code = code;
         this.parking = parking;
         this.parkingEtc = parkingEtc;
         this.treatmentMon = treatmentMon;
@@ -48,26 +50,16 @@ public class FacilityDetailDto {
     }
 
     public static FacilityDetailDto of(
-            String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
+            String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
             String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek,
             String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday,
             String emergencyDay, String emergencyNight
     ) {
         return new FacilityDetailDto(
-                parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
+                code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
                 treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek,
                 receiveSat, lunchWeek, lunchSat, noTreatmentSun,noTreatmentHoliday,
                 emergencyDay, emergencyNight
         );
     }
-
-    public static FacilityDetailDto ofNull() {
-        return new FacilityDetailDto(
-                null, null, null, null, null,
-                null, null, null, null, null,
-                null, null, null, null, null,
-                null, null
-        );
-    }
-
 }

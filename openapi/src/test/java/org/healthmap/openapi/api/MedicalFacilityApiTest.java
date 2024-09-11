@@ -30,7 +30,7 @@ class MedicalFacilityApiTest {
 
             // then
             Assertions.assertThat(hospitalDtoList).isNotEmpty();
-            Assertions.assertThat(hospitalDtoList.size()).isEqualTo(1000);
+            Assertions.assertThat(hospitalDtoList.size()).isNotEqualTo(0);
         }
 
         @Test

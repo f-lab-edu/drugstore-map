@@ -61,7 +61,7 @@ public class PatternUtils {
         } else {
             if (endHour.charAt(0) == '0') {     // 두번째 hour
                 result.append(convert12To24Format(endHour));
-            } else if (endHour.charAt(0) == '1') {
+            } else if (endHour.charAt(0) == '1' || endHour.charAt(0) == '2') {
                 result.append(convert24Format(endHour));
             }
         }
