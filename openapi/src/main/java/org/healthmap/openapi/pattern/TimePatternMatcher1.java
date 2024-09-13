@@ -30,7 +30,7 @@ public class TimePatternMatcher1 implements PatternMatcherInterface {
         String startTimeAmPm = matcher.group(1);
         String startHour = matcher.group(2);
         String startMinute = matcher.group(3);
-        String endTime = matcher.group(6);
+        String endHour = matcher.group(6);
         String endMinute = matcher.group(7);
 
         // start hour
@@ -43,7 +43,7 @@ public class TimePatternMatcher1 implements PatternMatcherInterface {
         // start minute
         resultStr.append(PatternUtils.getStartMinute(startMinute));
         // end hour
-        resultStr.append(PatternUtils.getEndHour(endTime));
+        resultStr.append(PatternUtils.getEndHour(endHour));
         // end minute
         resultStr.append(PatternUtils.getEndMinute(endMinute));
 

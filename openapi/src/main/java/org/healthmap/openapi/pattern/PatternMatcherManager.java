@@ -25,7 +25,6 @@ public class PatternMatcherManager {
                 break;
             }
         }
-        log.info("matchAndFormat result: {}", result);
         return result;
     }
 }

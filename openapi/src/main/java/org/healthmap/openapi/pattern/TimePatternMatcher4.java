@@ -41,7 +41,6 @@ public class TimePatternMatcher4 implements PatternMatcherInterface {
         }
         // start minute
         resultStr.append(PatternUtils.getStartMinute(startMinute));
-
         //end 시간
         resultStr.append(PatternUtils.getEndHour(endHour));
         //end 분

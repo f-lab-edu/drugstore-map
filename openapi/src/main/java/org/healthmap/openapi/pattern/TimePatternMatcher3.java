@@ -29,12 +29,12 @@ public class TimePatternMatcher3 implements PatternMatcherInterface {
 
         String startTime = matcher.group(1);
         String startMinute = null;
-        String endTime = matcher.group(3);
+        String endHour = matcher.group(3);
         String endMinute = null;
 
         resultStr.append(PatternUtils.getStartHourWithoutAmPm(startTime));
         resultStr.append(PatternUtils.getStartMinute(startMinute));
-        resultStr.append(PatternUtils.getEndHour(endTime));
+        resultStr.append(PatternUtils.getEndHour(endHour));
         resultStr.append(PatternUtils.getEndMinute(endMinute));
         return resultStr.toString();
 
