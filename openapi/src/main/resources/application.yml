@@ -10,8 +10,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # 나중에 제거
-    show-sql: true
+      ddl-auto: create  # 나중에 제거
+#    show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:

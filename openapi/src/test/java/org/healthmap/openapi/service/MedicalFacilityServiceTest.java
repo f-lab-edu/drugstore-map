@@ -15,7 +15,7 @@ class MedicalFacilityServiceTest {
     @Test
     @DisplayName("전체 기본 정보를 저장한다")
 //    @Transactional
-    public void saveAllMedicalFacility() {
+    void saveAllMedicalFacility() {
         int i = medicalFacilityService.saveAllMedicalFacility();
         Assertions.assertThat(i).isNotEqualTo(0);
     }
@@ -23,9 +23,24 @@ class MedicalFacilityServiceTest {
     @Test
     @DisplayName("없어진 병원 및 약국을 DB에서 삭제한다")
     @Transactional
-    void getAllMedicalFacilityIdList() {
+    void deleteMedicalFacilityIdList() {
         int deleted = medicalFacilityService.deleteMedicalFacilityList();
         Assertions.assertThat(deleted).isNotEqualTo(0);
     }
 
+    @Test
+    @DisplayName("새로 생긴 병원 및 약국을 DB에 추가")
+    @Transactional
+    void addNewMedicalFacility() {
+        int addCount = medicalFacilityService.addNewMedicalFacility();
+        Assertions.assertThat(addCount).isNotEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("이미 DB에 있는 데이터를 update")
+    @Transactional
+    void updateAllMedicalFacility() {
+        int updateCount = medicalFacilityService.updateAllMedicalFacility();
+        Assertions.assertThat(updateCount).isNotEqualTo(0);
+    }
 }

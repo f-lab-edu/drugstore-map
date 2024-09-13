@@ -49,6 +49,7 @@ public class MedicalFacilityService {
         List<String> idList = medicalFacilityRepository.findAllId();
         List<MedicalFacilityDto> updateDtoList = getUpdateDtoList(idList, medicalFacilityDtoList);
 
+        log.info("update count : {}", updateDtoList.size());
         return updateMedicalFacilityList(updateDtoList);
     }
 
@@ -60,6 +61,8 @@ public class MedicalFacilityService {
         List<MedicalFacilityDto> newDtoList = getNewMedicalFacilityList(idList, medicalFacilityDtoList);
         List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(newDtoList);
         medicalFacilityRepository.customSaveAll(entityList);
+
+        log.info("addNewMedicalFacilityList size : {}", entityList.size());
         return entityList.size();
     }
 

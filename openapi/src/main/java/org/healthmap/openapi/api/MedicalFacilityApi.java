@@ -129,7 +129,9 @@ public class MedicalFacilityApi {
         GeometryFactory geometryFactory = new GeometryFactory();
         double x = Double.parseDouble(xPos);
         double y = Double.parseDouble(yPos);
-        return geometryFactory.createPoint(new Coordinate(x, y));
+        Point point = geometryFactory.createPoint(new Coordinate(x, y));
+        point.setSRID(4326);
+        return point;
     }
 
     //데이터 전체 개수를 반환하는 메서드
