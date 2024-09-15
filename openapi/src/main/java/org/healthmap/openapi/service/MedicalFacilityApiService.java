@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MedicalFacilityService {
+public class MedicalFacilityApiService {
     private final UrlProperties urlProperties;
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final MedicalFacilityApi medicalFacilityApi;
