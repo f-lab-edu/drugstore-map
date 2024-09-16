@@ -1,8 +1,12 @@
 package org.healthmap.db.medicalfacility;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ColumnResult;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityResult;
+import jakarta.persistence.FieldResult;
 import jakarta.persistence.Id;
+import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,13 +14,48 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 
-
-
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor(access= AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name="medical_facility")
+@SqlResultSetMapping(
+        name = "MedicalFacilityMapping",
+        entities = @EntityResult(
+                entityClass = MedicalFacilityEntity.class,
+                fields = {
+                        @FieldResult(name = "id", column = "id"),
+                        @FieldResult(name = "name", column = "name"),
+                        @FieldResult(name = "address", column = "address"),
+                        @FieldResult(name = "phoneNumber", column = "phone_number"),
+                        @FieldResult(name = "url", column = "url"),
+                        @FieldResult(name = "type", column = "type"),
+                        @FieldResult(name = "state", column = "state"),
+                        @FieldResult(name = "city", column = "city"),
+                        @FieldResult(name = "town", column = "town"),
+                        @FieldResult(name = "postNumber", column = "post_number"),
+                        @FieldResult(name = "coordinate", column = "coordinate"),
+                        @FieldResult(name = "parking", column = "parking"),
+                        @FieldResult(name = "parkingEtc", column = "parking_etc"),
+                        @FieldResult(name = "treatmentMon", column = "treatment_mon"),
+                        @FieldResult(name = "treatmentTue", column = "treatment_tue"),
+                        @FieldResult(name = "treatmentWed", column = "treatment_wed"),
+                        @FieldResult(name = "treatmentThu", column = "treatment_thu"),
+                        @FieldResult(name = "treatmentFri", column = "treatment_fri"),
+                        @FieldResult(name = "treatmentSat", column = "treatment_sat"),
+                        @FieldResult(name = "treatmentSun", column = "treatment_sun"),
+                        @FieldResult(name = "receiveWeek", column = "receive_week"),
+                        @FieldResult(name = "receiveSat", column = "receive_sat"),
+                        @FieldResult(name = "lunchWeek", column = "lunch_week"),
+                        @FieldResult(name = "lunchSat", column = "lunch_sat"),
+                        @FieldResult(name = "noTreatmentSun", column = "no_treatment_sun"),
+                        @FieldResult(name = "noTreatmentHoliday", column = "no_treatment_holiday"),
+                        @FieldResult(name = "emergencyDay", column = "emergency_day"),
+                        @FieldResult(name = "emergencyNight", column = "emergency_night")
+                }
+        ),
+        columns = {@ColumnResult(name = "distance", type = Double.class)}
+)
+@Table(name = "medical_facility")
 public class MedicalFacilityEntity {
     @Id
     private String id;

@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FacilityDetailService {
+public class FacilityDetailApiService {
     private final FacilityDetailInfoApi facilityDetailInfoApi;
     private final MedicalFacilityRepository medicalFacilityRepository;
 
@@ -32,7 +32,7 @@ public class FacilityDetailService {
         List<FacilityDetailDto> facilityDetailDtoList = new ArrayList<>();
         List<String> allIdList = getAllIdList();
         for (String id : allIdList) {
-            FacilityDetailDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailInfo(id);
+            FacilityDetailDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailInfoFromJson(id);
             if (facilityDetailInfo != null) {
                 facilityDetailDtoList.add(facilityDetailInfo);
             }

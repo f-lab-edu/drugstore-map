@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class FacilityDetailServiceTest {
+class FacilityDetailServiceApiTest {
     @Autowired
-    private FacilityDetailService facilityDetailService;
+    private FacilityDetailApiService facilityDetailService;
 
     @Test
     @DisplayName("세부 정보를 저장하는지 확인")

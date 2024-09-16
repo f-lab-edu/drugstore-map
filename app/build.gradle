@@ -21,6 +21,12 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.hibernate:hibernate-spatial:6.6.0.Final'
+
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
 
@@ -29,6 +35,8 @@ dependencies {
 
     // This dependency is used by the application.
     implementation libs.guava
+
+    implementation(project(':db'))
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

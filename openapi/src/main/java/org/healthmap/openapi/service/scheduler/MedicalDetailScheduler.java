@@ -2,8 +2,8 @@ package org.healthmap.openapi.service.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.healthmap.openapi.service.FacilityDetailService;
-import org.healthmap.openapi.service.MedicalFacilityService;
+import org.healthmap.openapi.service.FacilityDetailApiService;
+import org.healthmap.openapi.service.MedicalFacilityApiService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +16,8 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 @RequiredArgsConstructor
 public class MedicalDetailScheduler {
-    private final FacilityDetailService facilityDetailService;
-    private final MedicalFacilityService medicalFacilityService;
+    private final FacilityDetailApiService facilityDetailService;
+    private final MedicalFacilityApiService medicalFacilityService;
 
     /**
      * *           *　　　　　　*　　　　　　*　　　　　　*　　　　　　*
@@ -38,21 +38,21 @@ public class MedicalDetailScheduler {
     }
 
     @Scheduled(cron = "0 20 1 * * *")
-    public void updateFacilityDetailInfo() {
+    public void updateAllMedicalFacilityInfo() {
         String time = getDateTimeNow();
-        log.info("updateFacilityDetailInfo start : {}", time);
-        facilityDetailService.saveFacilityDetail();
+        log.info("updateAllMedicalFacilityInfo start : {}", time);
+        medicalFacilityService.updateAllMedicalFacility();
     }
 
-    @Scheduled(cron = "0 0 2 * * *")
-    public void updateAllMedicalFacilityInfo() {
+    @Scheduled(cron = "0 30 1 * * *")
+    public void updateFacilityDetailInfo() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime start = LocalDateTime.now();
         Instant startTime = Instant.now();
-        log.info("updateAllMedicalFacilityInfo start : {}", start.format(formatter));
-        medicalFacilityService.updateAllMedicalFacility();
+        log.info("updateFacilityDetailInfo start : {}", start.format(formatter));
+        facilityDetailService.saveFacilityDetail();
         Instant endTime = Instant.now();
-        System.out.println("수행시간: " + Duration.between(startTime, endTime).toSeconds() + " s");
+        log.info("수행시간: {}", Duration.between(startTime, endTime).toSeconds() + " s");
     }
 
     private static String getDateTimeNow() {
