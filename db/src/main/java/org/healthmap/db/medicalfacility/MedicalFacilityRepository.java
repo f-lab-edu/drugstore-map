@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface MedicalFacilityRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
 
+    List<MedicalFacilityEntity> findByCoordinateIsNull();
+
     @Query("SELECT m.id FROM MedicalFacilityEntity m")
     List<String> findAllId();
 
@@ -63,4 +65,10 @@ public interface MedicalFacilityRepository extends JpaRepository<MedicalFacility
             @Param("url") String url, @Param("type") String type, @Param("state") String state, @Param("city") String city,
             @Param("town") String town, @Param("postNumber") String postNumber, @Param("coordinate") Point coordinate
     );
+
+    @Modifying
+    @Query("UPDATE MedicalFacilityEntity m SET " +
+            "m.coordinate = :coordinate " +
+            "WHERE m.id = :id")
+    void updateNullCoordinate(@Param("coordinate") Point coordinate, @Param("id") String id);
 }

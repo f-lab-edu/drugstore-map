@@ -30,7 +30,7 @@ public class FacilityDetailApiService {
     // 세부정보 데이터 가져오는 메서드
     private List<FacilityDetailDto> getFacilityDetailList() {
         List<FacilityDetailDto> facilityDetailDtoList = new ArrayList<>();
-        List<String> allIdList = getAllIdList();
+        List<String> allIdList = getAllIdList();    //10만개
         for (String id : allIdList) {
             FacilityDetailDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailInfoFromJson(id);
             if (facilityDetailInfo != null) {
