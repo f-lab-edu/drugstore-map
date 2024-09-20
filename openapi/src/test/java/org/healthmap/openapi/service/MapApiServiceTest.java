@@ -1,4 +1,4 @@
-package org.healthmap.mapapi.service;
+package org.healthmap.openapi.service;
 
 import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
@@ -17,6 +17,7 @@ class MapApiServiceTest {
     @Transactional
     void fillNullCoordinate() {
         int size = mapApiService.fillCoordinateFromMapApi();
+        System.out.println("update size : " + size);
         Assertions.assertThat(size).isNotZero();
     }
 }

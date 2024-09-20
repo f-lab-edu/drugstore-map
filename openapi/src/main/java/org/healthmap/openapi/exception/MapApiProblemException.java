@@ -1,7 +1,7 @@
-package org.healthmap.mapapi.exception;
+package org.healthmap.openapi.exception;
 
 import lombok.Getter;
-import org.healthmap.mapapi.error.MapApiErrorCode;
+import org.healthmap.openapi.error.MapApiErrorCode;
 
 @Getter
 public class MapApiProblemException extends RuntimeException{

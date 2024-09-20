@@ -1,4 +1,4 @@
-package org.healthmap.mapapi.error;
+package org.healthmap.openapi.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

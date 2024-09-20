@@ -1,4 +1,4 @@
-package org.healthmap.mapapi.dto;
+package org.healthmap.openapi.dto;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

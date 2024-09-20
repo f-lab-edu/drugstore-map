@@ -1,12 +1,12 @@
-package org.healthmap.mapapi.service;
+package org.healthmap.openapi.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityEntity;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
-import org.healthmap.mapapi.api.MapApi;
-import org.healthmap.mapapi.dto.MapApiRequestDto;
+import org.healthmap.openapi.api.MapApi;
+import org.healthmap.openapi.dto.MapApiRequestDto;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -26,22 +26,27 @@ public class MapApiService {
 
     @Transactional
     public int fillCoordinateFromMapApi() {
+        int updateSize = 0;
         List<MedicalFacilityEntity> medicalFacilityEntityList = getListWithNullCoordinate();
-        List<MapApiRequestDto> mapApiRequestDtoList = entityToAddressIdDto(medicalFacilityEntityList);
+        List<MapApiRequestDto> mapApiRequestDtoList = entityToMapApiRequestDto(medicalFacilityEntityList);
         if (!mapApiRequestDtoList.isEmpty()) {
-            updateNullCoordinate(mapApiRequestDtoList);
+            updateSize = updateNullCoordinate(mapApiRequestDtoList);
         }
-        return mapApiRequestDtoList.size();
+        return updateSize;
     }
 
-    private void updateNullCoordinate(List<MapApiRequestDto> mapApiRequestDtoList) {
-        log.info("NullCoordinate size : {}", mapApiRequestDtoList.size());
-        for(MapApiRequestDto dto : mapApiRequestDtoList) {
-            List<Double> XYFromMapApi = mapApi.getCoordinateFromMapApi(dto.getAddress());
-            Point coordinate = convertToXYPoint(XYFromMapApi);
-            log.info("point: {}, address: {}", coordinate, dto.getId());
-            medicalFacilityRepository.updateNullCoordinate(coordinate, dto.getId());
+    private int updateNullCoordinate(List<MapApiRequestDto> mapApiRequestDtoList) {
+        int updateSize = 0;
+        for (MapApiRequestDto dto : mapApiRequestDtoList) {
+            String address = dto.getAddress().split(",")[0];
+            List<Double> XYFromMapApi = mapApi.getCoordinateFromMapApi(address);
+            if (!XYFromMapApi.isEmpty()) {
+                Point coordinate = convertToXYPoint(XYFromMapApi);
+                medicalFacilityRepository.updateNullCoordinate(coordinate, dto.getId());
+                updateSize++;
+            }
         }
+        return updateSize;
     }
 
     private Point convertToXYPoint(List<Double> xyFromMapApi) {
@@ -57,7 +62,7 @@ public class MapApiService {
         return medicalFacilityRepository.findByCoordinateIsNull();
     }
 
-    private List<MapApiRequestDto> entityToAddressIdDto(List<MedicalFacilityEntity> entityList) {
+    private List<MapApiRequestDto> entityToMapApiRequestDto(List<MedicalFacilityEntity> entityList) {
         return Optional.ofNullable(entityList)
                 .map(list -> list.stream()
                         .map(entity -> MapApiRequestDto.of(entity.getId(), entity.getAddress()))
