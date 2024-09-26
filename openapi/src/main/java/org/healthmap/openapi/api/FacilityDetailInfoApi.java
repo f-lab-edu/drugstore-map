@@ -1,11 +1,14 @@
 package org.healthmap.openapi.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyProperties;
 import org.healthmap.openapi.config.UrlProperties;
-import org.healthmap.openapi.dto.FacilityDetailDto;
+import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
+import org.healthmap.openapi.dto.FacilityDetailJsonDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;
 import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.healthmap.openapi.pattern.PatternMatcherManager;
@@ -19,6 +22,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,6 +30,7 @@ import java.net.http.HttpResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
@@ -33,16 +38,18 @@ public class FacilityDetailInfoApi {
     private final KeyProperties keyProperties;
     private final UrlProperties urlProperties;
     private final PatternMatcherManager patternMatcherManager;
+    private final ObjectMapper objectMapper;
 
     public FacilityDetailInfoApi(KeyProperties keyProperties, UrlProperties urlProperties, PatternMatcherManager patternMatcherManager) {
         this.keyProperties = keyProperties;
         this.urlProperties = urlProperties;
         this.patternMatcherManager = patternMatcherManager;
+        this.objectMapper = new ObjectMapper();
     }
 
-    public FacilityDetailDto getFacilityDetailInfo(String code) {
+    public FacilityDetailUpdateDto getFacilityDetailInfo(String code) {
 
-        FacilityDetailDto facilityDetailDto = null;
+        FacilityDetailUpdateDto facilityDetailDto = null;
         String url = urlProperties.getDetailUrl()
                 + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
                 + "&ykiho=" + code;
@@ -93,7 +100,7 @@ public class FacilityDetailInfoApi {
 
                     String emergencyDay = XmlUtils.getStringFromElement("emyDayYn", element);
                     String emergencyNight = XmlUtils.getStringFromElement("emyNgtYn", element);
-                    facilityDetailDto = FacilityDetailDto.of(
+                    facilityDetailDto = FacilityDetailUpdateDto.of(
                             code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                             receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday, emergencyDay, emergencyNight
                     );
@@ -109,8 +116,36 @@ public class FacilityDetailInfoApi {
         return facilityDetailDto;
     }
 
-    public FacilityDetailDto getFacilityDetailInfoFromJson(String code) {
-        FacilityDetailDto facilityDetailDto = null;
+    // OpenApi로부터 데이터 받아오는 역할만 부여
+    public CompletableFuture<FacilityDetailJsonDto> getFacilityDetailInfoAsync(String code) {
+        String apiUrl = urlProperties.getDetailUrl()
+                + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
+                + "&ykiho=" + code
+                + "&_type=json";
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET().build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenApply(this::getFacilityDetailJsonDto)
+                .thenApply(x -> {
+                    if(x != null){
+                        x.saveCodeIntoDto(code);
+                    }
+                    return x;
+                })
+                .exceptionally(ex -> {
+                    log.error("error 발생, null 반환: {}", ex.getMessage());
+                    return null;
+                });
+    }
+
+    // Json으로 OpenAPI 가져오기
+    // Sync
+    //TODO: 변경 예정
+    public FacilityDetailUpdateDto getFacilityDetailInfoFromJson(String code) {
+        FacilityDetailUpdateDto facilityDetailDto = null;
         String apiUrl = urlProperties.getDetailUrl()
                 + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
                 + "&ykiho=" + code
@@ -123,6 +158,7 @@ public class FacilityDetailInfoApi {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String body = response.body();
+            log.info("body : {}", body);
 
             JsonObject jsonObject = JsonParser.parseString(body).getAsJsonObject();
             JsonObject jsonArray = jsonObject.getAsJsonObject("response")
@@ -164,7 +200,7 @@ public class FacilityDetailInfoApi {
                 String emergencyDay = getJsonElement(item, "emyDayYn");
                 String emergencyNight = getJsonElement(item, "emyNgtYn");
 
-                facilityDetailDto = FacilityDetailDto.of(
+                facilityDetailDto = FacilityDetailUpdateDto.of(
                         code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                         receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday, emergencyDay, emergencyNight
                 );
@@ -177,6 +213,24 @@ public class FacilityDetailInfoApi {
             throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
         }
         return facilityDetailDto;
+    }
+
+    private FacilityDetailJsonDto getFacilityDetailJsonDto(String jsonBody) {
+        FacilityDetailJsonDto facilityDetailJsonDto = null;
+        try {
+            JsonNode path = objectMapper.readTree(jsonBody)
+                    .path("response")
+                    .path("body")
+                    .path("items");
+            if(!path.isEmpty()) {
+                JsonNode itemNode = path.path("item");
+                facilityDetailJsonDto = objectMapper.treeToValue(itemNode, FacilityDetailJsonDto.class);
+            }
+        } catch(Exception e) {  // return null 할지 생각
+            log.error("getFacilityDetailJson error : {}",e.getMessage(),e);
+            throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR, e.getMessage());
+        }
+        return facilityDetailJsonDto;
     }
 
     private String getTreatmentTimeFromElement(JsonObject obj, String startTimeKey, String endTimeKey) {
