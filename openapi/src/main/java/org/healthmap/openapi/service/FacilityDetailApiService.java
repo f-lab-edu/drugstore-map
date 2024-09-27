@@ -1,15 +1,13 @@
 package org.healthmap.openapi.service;
 
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.openapi.api.FacilityDetailInfoApi;
 import org.healthmap.openapi.dto.FacilityDetailJsonDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
-import org.healthmap.openapi.error.OpenApiErrorCode;
-import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.healthmap.openapi.pattern.PatternMatcherManager;
+import org.healthmap.openapi.utility.RateLimitBucket;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,15 +18,22 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class FacilityDetailApiService {
     private final FacilityDetailInfoApi facilityDetailInfoApi;
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final PatternMatcherManager patternMatcherManager;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(1000);
+    private final ExecutorService executorService;
+
+    public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager, RateLimitBucket rateLimitBucket) {
+        this.facilityDetailInfoApi = facilityDetailInfoApi;
+        this.medicalFacilityRepository = medicalFacilityRepository;
+        this.patternMatcherManager = patternMatcherManager;
+        this.executorService = Executors.newFixedThreadPool(500);
+    }
 
     // 세부정보 저장
     //TODO: 변경 예정
@@ -41,43 +46,55 @@ public class FacilityDetailApiService {
         return updateSize;
     }
 
-    //JsonDto를 updateDto로 변환 후 CompletableFuture로 반환
-    //Async
-    private List<CompletableFuture<FacilityDetailJsonDto>> getFacilityDetailInfo() {
-        List<CompletableFuture<FacilityDetailJsonDto>> futureList = new ArrayList<>();
+
+    // 1. API로부터 JsonDTO 가져오기
+    // 2. jsonDTO를 updateDTO로 변환
+    // 3. repository에 update 진행
+    @Transactional
+    public CompletableFuture<Integer> saveFacilityDetailAsync() {
         List<String> allIdList = getAllIdList();
+        AtomicInteger updateCount = new AtomicInteger(0);
+        int batchSize = 1000;
+        List<CompletableFuture<Void>> futureList = new ArrayList<>();
 
-        for (String id : allIdList) {
-            CompletableFuture<FacilityDetailJsonDto> future = facilityDetailInfoApi.getFacilityDetailInfoAsync(id);
-            futureList.add(future);
-        }
-        return futureList;
-    }
+        for (int i = 0; i < allIdList.size(); i += batchSize) {
+            int end = Math.min(allIdList.size(), i + batchSize);
+            List<String> batchIdList = allIdList.subList(i, end);
 
-    // 리스트 안의 Dto를 변환
-    private List<CompletableFuture<FacilityDetailUpdateDto>> convertJsonDtoToUpdateDto() {
-        List<CompletableFuture<FacilityDetailUpdateDto>> futureList = new ArrayList<>();
-        List<CompletableFuture<FacilityDetailJsonDto>> facilityDetailInfo = getFacilityDetailInfo();
-
-        for (CompletableFuture<FacilityDetailJsonDto> future : facilityDetailInfo) {
-            CompletableFuture<FacilityDetailUpdateDto> updateFuture = future.thenApplyAsync(jsonDto -> {
-                        if(jsonDto != null) {
-                            return convertJsonDto(jsonDto);
-                        } else {
+            for (String id : batchIdList) {
+                CompletableFuture<Void> future = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(id)
+                        .thenApplyAsync(jsonDto -> {
+                            if (jsonDto != null) {
+                                return convertToUpdateDto(jsonDto);
+                            } else {
+                                return null;
+                            }
+                        }, executorService)
+                        .thenAcceptAsync(updateDto -> {
+                            if (updateDto != null) {
+                                updateFacilityDetail(updateDto);
+                                updateCount.incrementAndGet();
+                                if (updateCount.get() % 1000 == 0) {
+                                    log.info("update count: {}", updateCount.get());
+                                }
+                            }
+                        }, executorService)
+                        .exceptionally(ex -> {
+                            log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
                             return null;
-                        }
-                    }, executorService)
-                    .exceptionally(ex -> {
-                        log.error("ConvertJsonDtoToUpdateDto 시에 문제 발생 : {}", ex.getMessage());
-                        throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
-                    });
-            futureList.add(updateFuture);
+                        });
+                futureList.add(future);
+            }
+            CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
+            futureList.clear();
         }
-        return futureList;
+        log.info("updateSize : {}", updateCount.get());
+        return CompletableFuture.completedFuture(updateCount.get());
     }
+
 
     // DTO 변환 로직
-    public FacilityDetailUpdateDto convertJsonDto(FacilityDetailJsonDto dto) {
+    private FacilityDetailUpdateDto convertToUpdateDto(FacilityDetailJsonDto dto) {
         String noTreatmentSun = checkNoTreatment(dto.getNoTrmtSun());
         String noTreatmentHoliday = checkNoTreatment(dto.getNoTrmtSun());
         String treatmentMon = getTreatmentTime(dto.getTrmtMonStart(), dto.getTrmtMonEnd());
@@ -99,7 +116,7 @@ public class FacilityDetailApiService {
 
     private String getSundayTreatment(String noTreatmentSun, String treatmentStart, String treatmentEnd) {
         String treatmentN = "휴진";
-        if(noTreatmentSun != null && noTreatmentSun.equals(treatmentN)) {
+        if (noTreatmentSun != null && noTreatmentSun.equals(treatmentN)) {
             return treatmentN;
         } else {
             return getTreatmentTime(treatmentStart, treatmentEnd);
@@ -109,12 +126,12 @@ public class FacilityDetailApiService {
     private String changeLunchTime(String lunchTime) {
         String nothing = "없음";
         Set<String> noLunch = new HashSet<>(List.of("공란", "휴진", "없음", "휴무", "전체휴진", "오전진료", "무", "점심시간없음"));
-        if(lunchTime == null){
+        if (lunchTime == null) {
             return null;
         }
 
         String spaceRemoved = lunchTime.replaceAll(" ", "");
-        if(noLunch.contains(spaceRemoved)){
+        if (noLunch.contains(spaceRemoved)) {
             return nothing;
         } else {
             return changeTimeFormat(lunchTime);
@@ -129,13 +146,13 @@ public class FacilityDetailApiService {
                 List.of("전부휴진", "모두휴진", "휴진", "휴무", "전부휴일", "전부휴무",
                         "전체휴진", "매주휴진", "종일휴진", "휴뮤", "휴진입니다.")
         );
-        if(time == null) {
+        if (time == null) {
             return null;
         }
         String spaceRemoved = time.replaceAll(" ", "");
-        if(treatmentYes.contains(spaceRemoved)) {
+        if (treatmentYes.contains(spaceRemoved)) {
             return treatmentY;
-        } else if(treatmentNo.contains(spaceRemoved)) {
+        } else if (treatmentNo.contains(spaceRemoved)) {
             return treatmentN;
         }
         return time;
@@ -147,10 +164,10 @@ public class FacilityDetailApiService {
 
     private String getTreatmentTime(String start, String end) {
         String result = null;
-        if((start != null && start.length() == 4)
+        if ((start != null && start.length() == 4)
                 && (end != null && end.length() == 4)) {
-            String startTime = String.format("%s:%s", start.substring(0,2), start.substring(2,4));
-            String endTime = String.format("%s:%s", end.substring(0,2), end.substring(2,4));
+            String startTime = String.format("%s:%s", start.substring(0, 2), start.substring(2, 4));
+            String endTime = String.format("%s:%s", end.substring(0, 2), end.substring(2, 4));
             result = String.format("%s ~ %s", startTime, endTime);
         }
         return result;
@@ -181,7 +198,7 @@ public class FacilityDetailApiService {
             futures.add(future);
         }
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         allFutures.join();
         executorService.shutdown();
 

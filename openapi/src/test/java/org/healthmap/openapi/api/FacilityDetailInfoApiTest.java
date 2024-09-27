@@ -33,7 +33,7 @@ class FacilityDetailInfoApiTest {
     @DisplayName("Jackson 라이브러리 동작 하는지 확인")
     void testJacksonLibrary() throws ExecutionException, InterruptedException {
         String test = "JDQ4MTYyMiM4MSMkMiMkMCMkMDAkMzgxNzAyIzExIyQxIyQzIyQwMyQyNjEyMjIjODEjJDEjJDYjJDgz";
-        CompletableFuture<FacilityDetailJsonDto> facilityDetailInfoAsync = facilityDetailInfoApi.getFacilityDetailInfoAsync(test);
+        CompletableFuture<FacilityDetailJsonDto> facilityDetailInfoAsync = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(test);
         FacilityDetailJsonDto facilityDetailJsonDto = facilityDetailInfoAsync.get();
         System.out.println(facilityDetailJsonDto);
         Assertions.assertThat(facilityDetailJsonDto).isNotNull();
