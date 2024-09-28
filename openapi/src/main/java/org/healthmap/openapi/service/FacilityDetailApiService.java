@@ -54,7 +54,7 @@ public class FacilityDetailApiService {
     public CompletableFuture<Integer> saveFacilityDetailAsync() {
         List<String> allIdList = getAllIdList();
         AtomicInteger updateCount = new AtomicInteger(0);
-        int batchSize = 1000;
+        int batchSize = 30;
         List<CompletableFuture<Void>> futureList = new ArrayList<>();
 
         for (int i = 0; i < allIdList.size(); i += batchSize) {
@@ -74,9 +74,6 @@ public class FacilityDetailApiService {
                             if (updateDto != null) {
                                 updateFacilityDetail(updateDto);
                                 updateCount.incrementAndGet();
-                                if (updateCount.get() % 1000 == 0) {
-                                    log.info("update count: {}", updateCount.get());
-                                }
                             }
                         }, executorService)
                         .exceptionally(ex -> {
