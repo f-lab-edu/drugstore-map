@@ -1,5 +1,6 @@
 package org.healthmap.db.medicalfacility;
 
+import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +19,7 @@ public interface MedicalFacilityRepository extends JpaRepository<MedicalFacility
     List<String> findAllId();
 
     @Modifying
+    @Transactional
     @Query("UPDATE MedicalFacilityEntity m SET " +
             "m.parking = COALESCE(:parking, m.parking), " +
             "m.parkingEtc = COALESCE(:parkingEtc, m.parkingEtc), " +

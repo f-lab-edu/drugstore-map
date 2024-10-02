@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 @Slf4j
-public class OpenApiExceptionHandler {
+public class ApiExceptionHandler {
     @ExceptionHandler(value = OpenApiProblemException.class)
     public ResponseEntity<Object> openApiProblemException(OpenApiProblemException e) {
         OpenApiErrorCode errorCode = e.getOpenApiErrorCode();

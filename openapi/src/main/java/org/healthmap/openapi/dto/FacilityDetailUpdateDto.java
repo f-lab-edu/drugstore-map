@@ -1,13 +1,15 @@
 package org.healthmap.openapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Getter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @ToString   // 차후 필요없게될 시 삭제
-public class FacilityDetailDto {
+public class FacilityDetailUpdateDto {
     private String code;            // ykiho(암호 요양 기호)
     private String parking;
     private String parkingEtc;
@@ -28,7 +30,7 @@ public class FacilityDetailDto {
     private String emergencyNight;
 
 
-    private FacilityDetailDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
+    private FacilityDetailUpdateDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
         this.code = code;
         this.parking = parking;
         this.parkingEtc = parkingEtc;
@@ -49,17 +51,18 @@ public class FacilityDetailDto {
         this.emergencyNight = emergencyNight;
     }
 
-    public static FacilityDetailDto of(
+    public static FacilityDetailUpdateDto of(
             String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
             String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek,
             String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday,
             String emergencyDay, String emergencyNight
     ) {
-        return new FacilityDetailDto(
+        return new FacilityDetailUpdateDto(
                 code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
                 treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek,
                 receiveSat, lunchWeek, lunchSat, noTreatmentSun,noTreatmentHoliday,
                 emergencyDay, emergencyNight
         );
     }
+
 }
