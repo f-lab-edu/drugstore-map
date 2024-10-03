@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -67,8 +68,19 @@ public class FacilityDetailApiService {
                 List<CompletableFuture<Void>> allStepList = new ArrayList<>();
                 try {
                     while (!idQueue.isEmpty()) {
-                        log.info("idQueue size : {}", idQueue.size());
-                        String id = idQueue.take();
+                        if (idQueue.size() % 500 == 0) {
+                            log.info("idQueue size : {}", idQueue.size());
+                        }
+                        String id = idQueue.poll(10, TimeUnit.SECONDS);
+
+                        if (id == null && idQueue.isEmpty()) {
+                            log.info("idQueue is empty");
+                            break;
+                        } else if (id == null) {
+                            log.info("id: null");
+                            continue;
+                        }
+
                         CompletableFuture<FacilityDetailJsonDto> jsonDtoFuture = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(id, idQueue);
                         FacilityDetailJsonDto jsonDto = jsonDtoFuture.join();
 
@@ -79,13 +91,12 @@ public class FacilityDetailApiService {
                                         return null;
                                     }
                                 }, executorService)
-                                .thenAcceptAsync(updateDto -> {
-                                    log.info("update dto: {}", updateDto);
+                                .thenAccept(updateDto -> {
                                     if (updateDto != null) {
                                         updateFacilityDetail(updateDto);
                                         updateCount.incrementAndGet();
                                     }
-                                }, executorService)
+                                })
                                 .exceptionally(ex -> {
                                     log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
                                     idQueue.add(id);
@@ -97,9 +108,9 @@ public class FacilityDetailApiService {
                 } catch (InterruptedException e) {
                     log.error("Queue 처리 중 인터럽트 발생: {}", e.getMessage());
                 }
-                log.info("while문 완료");
+                log.info("step allOf 실행 시작");
                 CompletableFuture<Void> allStepFuture = CompletableFuture.allOf(allStepList.toArray(new CompletableFuture[0]));
-                futureList.add(allStepFuture);
+                allStepFuture.join();
             }, executorService);
             futureList.add(future);
         }
