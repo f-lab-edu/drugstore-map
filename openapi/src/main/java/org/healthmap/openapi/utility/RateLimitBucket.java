@@ -13,17 +13,17 @@ public class RateLimitBucket {
     private final Bucket bucket;
 
     public RateLimitBucket() {
-        Bandwidth bandwidth = Bandwidth.builder().capacity(30)
-                .refillIntervally(30, Duration.ofSeconds(1)).build();
+        Bandwidth bandwidth = Bandwidth.builder()
+                .capacity(30)
+                .refillIntervally(30, Duration.ofSeconds(1))
+                .build();
         this.bucket = Bucket.builder()
-                .addLimit(bandwidth).build();
+                .addLimit(bandwidth)
+                .build();
     }
 
-    public synchronized void consumeWithBlock(int numTokens) throws InterruptedException {
+    public void consumeWithBlock(int numTokens) throws InterruptedException {
         bucket.asBlocking().consume(numTokens);
     }
 
-    public synchronized long getAvailableTokens() throws InterruptedException {
-        return bucket.getAvailableTokens();
-    }
 }

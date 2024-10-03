@@ -15,9 +15,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -27,12 +29,14 @@ public class FacilityDetailApiService {
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final PatternMatcherManager patternMatcherManager;
     private final ExecutorService executorService;
+    private final BlockingQueue<String> idQueue;
 
     public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager, RateLimitBucket rateLimitBucket) {
         this.facilityDetailInfoApi = facilityDetailInfoApi;
         this.medicalFacilityRepository = medicalFacilityRepository;
         this.patternMatcherManager = patternMatcherManager;
-        this.executorService = Executors.newFixedThreadPool(500);
+        this.executorService = Executors.newFixedThreadPool(100);
+        this.idQueue = new LinkedBlockingQueue<>(2000000);
     }
 
     // 세부정보 저장
@@ -53,40 +57,58 @@ public class FacilityDetailApiService {
     @Transactional
     public CompletableFuture<Integer> saveFacilityDetailAsync() {
         List<String> allIdList = getAllIdList();
+        idQueue.addAll(allIdList);
+
         AtomicInteger updateCount = new AtomicInteger(0);
-        int batchSize = 30;
         List<CompletableFuture<Void>> futureList = new ArrayList<>();
 
-        for (int i = 0; i < allIdList.size(); i += batchSize) {
-            int end = Math.min(allIdList.size(), i + batchSize);
-            List<String> batchIdList = allIdList.subList(i, end);
+        for (int i = 0; i < 10; i++) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                List<CompletableFuture<Void>> allStepList = new ArrayList<>();
+                try {
+                    while (!idQueue.isEmpty()) {
+                        log.info("idQueue size : {}", idQueue.size());
+                        String id = idQueue.take();
+                        CompletableFuture<FacilityDetailJsonDto> jsonDtoFuture = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(id, idQueue);
+                        FacilityDetailJsonDto jsonDto = jsonDtoFuture.join();
 
-            for (String id : batchIdList) {
-                CompletableFuture<Void> future = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(id)
-                        .thenApplyAsync(jsonDto -> {
-                            if (jsonDto != null) {
-                                return convertToUpdateDto(jsonDto);
-                            } else {
-                                return null;
-                            }
-                        }, executorService)
-                        .thenAcceptAsync(updateDto -> {
-                            if (updateDto != null) {
-                                updateFacilityDetail(updateDto);
-                                updateCount.incrementAndGet();
-                            }
-                        }, executorService)
-                        .exceptionally(ex -> {
-                            log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
-                            return null;
-                        });
-                futureList.add(future);
-            }
-            CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
-            futureList.clear();
+                        CompletableFuture<Void> steps = CompletableFuture.supplyAsync(() -> {
+                                    if (jsonDto != null) {
+                                        return convertToUpdateDto(jsonDto);
+                                    } else {
+                                        return null;
+                                    }
+                                }, executorService)
+                                .thenAcceptAsync(updateDto -> {
+                                    log.info("update dto: {}", updateDto);
+                                    if (updateDto != null) {
+                                        updateFacilityDetail(updateDto);
+                                        updateCount.incrementAndGet();
+                                    }
+                                }, executorService)
+                                .exceptionally(ex -> {
+                                    log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
+                                    idQueue.add(id);
+                                    return null;
+                                });
+                        allStepList.add(steps);
+
+                    }
+                } catch (InterruptedException e) {
+                    log.error("Queue 처리 중 인터럽트 발생: {}", e.getMessage());
+                }
+                log.info("while문 완료");
+                CompletableFuture<Void> allStepFuture = CompletableFuture.allOf(allStepList.toArray(new CompletableFuture[0]));
+                futureList.add(allStepFuture);
+            }, executorService);
+            futureList.add(future);
         }
-        log.info("updateSize : {}", updateCount.get());
-        return CompletableFuture.completedFuture(updateCount.get());
+        log.info("return 문 작업 시작");
+        return CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    log.info("updateSize : {}", updateCount.get());
+                    return updateCount.get();
+                });
     }
 
 
@@ -172,7 +194,7 @@ public class FacilityDetailApiService {
 
 
     // 세부정보 데이터 가져오는 메서드
-    //TODO: 변경 예정
+//TODO: 변경 예정
     private List<FacilityDetailUpdateDto> getFacilityDetailListTest() {
         List<FacilityDetailUpdateDto> facilityDetailDtoList = Collections.synchronizedList(new ArrayList<>());
         List<String> allIdList = getAllIdList();    //10만개
@@ -204,7 +226,7 @@ public class FacilityDetailApiService {
     }
 
     // 세부정보 데이터 가져오는 메서드
-    // Sync
+// Sync
     private List<FacilityDetailUpdateDto> getFacilityDetailList() {
         List<FacilityDetailUpdateDto> facilityDetailDtoList = new ArrayList<>();
         List<String> allIdList = getAllIdList();    //10만개
