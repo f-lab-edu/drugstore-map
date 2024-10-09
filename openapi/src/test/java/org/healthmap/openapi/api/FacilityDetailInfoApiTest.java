@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @SpringBootTest
 class FacilityDetailInfoApiTest {
@@ -33,7 +35,9 @@ class FacilityDetailInfoApiTest {
     @DisplayName("Jackson 라이브러리 동작 하는지 확인")
     void testJacksonLibrary() throws ExecutionException, InterruptedException {
         String test = "JDQ4MTYyMiM4MSMkMiMkMCMkMDAkMzgxNzAyIzExIyQxIyQzIyQwMyQyNjEyMjIjODEjJDEjJDYjJDgz";
-        CompletableFuture<FacilityDetailJsonDto> facilityDetailInfoAsync = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(test);
+        BlockingQueue<String> tempQueueForTest = new LinkedBlockingQueue<>();
+
+        CompletableFuture<FacilityDetailJsonDto> facilityDetailInfoAsync = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(test, tempQueueForTest);
         FacilityDetailJsonDto facilityDetailJsonDto = facilityDetailInfoAsync.get();
         System.out.println(facilityDetailJsonDto);
         Assertions.assertThat(facilityDetailJsonDto).isNotNull();

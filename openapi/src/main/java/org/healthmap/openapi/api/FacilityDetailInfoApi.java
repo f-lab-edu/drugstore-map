@@ -31,12 +31,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -55,9 +54,8 @@ public class FacilityDetailInfoApi {
         this.patternMatcherManager = patternMatcherManager;
         this.rateLimitBucket = rateLimitBucket;
         this.objectMapper = new ObjectMapper();
-        ExecutorService httpExecutorService = Executors.newFixedThreadPool(30);
-        this.executorService = Executors.newFixedThreadPool(100);
-        this.client = HttpClient.newBuilder().executor(httpExecutorService).build();
+        this.executorService = Executors.newFixedThreadPool(10);
+        this.client = HttpClient.newBuilder().build();
     }
 
     public FacilityDetailUpdateDto getFacilityDetailInfo(String code) {
@@ -129,7 +127,7 @@ public class FacilityDetailInfoApi {
     }
 
     // OpenApi로부터 데이터 받아오는 역할만 부여
-    public CompletableFuture<FacilityDetailJsonDto> getFacilityDetailJsonDtoFromApi(String code) {
+    public CompletableFuture<FacilityDetailJsonDto> getFacilityDetailJsonDtoFromApi(String code, Queue<String> idQueue) {
         String apiUrl = urlProperties.getDetailUrl()
                 + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
                 + "&ykiho=" + code
@@ -161,14 +159,8 @@ public class FacilityDetailInfoApi {
                     if (ex.getMessage().contains("LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR")) {
                         log.warn("초당 요청 한도 초과, 재시도...");
                         // 재시도 로직 또는 지연 후 재시도
-                        return CompletableFuture.supplyAsync(() -> {
-                                    try {
-                                        return getFacilityDetailJsonDtoFromApi(code).get();
-                                    } catch (InterruptedException | ExecutionException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                },
-                                CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS)).join();
+                        idQueue.add(code);
+                        return null;
                     }
                     log.error("error 발생, null 반환: {}", ex.getMessage());
                     return null;
@@ -261,7 +253,6 @@ public class FacilityDetailInfoApi {
                 facilityDetailJsonDto = objectMapper.treeToValue(itemNode, FacilityDetailJsonDto.class);
             }
         } catch (JsonParseException je) {
-            log.error(je.getMessage(),je);
             throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR, "LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR");
         } catch (Exception e) {  // return null 할지 생각
             log.error("getFacilityDetailJson error : {}", e.getMessage(), e);
