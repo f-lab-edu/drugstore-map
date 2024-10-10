@@ -14,4 +14,5 @@ rootProject.name = 'drugstore-map'
 include('app')
 include 'openapi'
 include 'db'
+include 'messaging'
 
