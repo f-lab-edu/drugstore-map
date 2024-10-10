@@ -2,3 +2,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9093
 
+kafka-config:
+  consumer:
+    groupId: my-group
+    topic: my-topic   #변경 가능성 있음

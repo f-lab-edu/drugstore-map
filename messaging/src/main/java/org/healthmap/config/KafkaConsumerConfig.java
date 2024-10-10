@@ -2,6 +2,7 @@ package org.healthmap.config;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -50,6 +51,12 @@ public class KafkaConsumerConfig {
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.executor());
 
         return factory;
+    }
+
+    // 테스트용
+    @Bean
+    public KafkaConsumer<String, String> manualKafkaConsumer() {
+        return new KafkaConsumer<>(consumerConfig());
     }
 
 }
