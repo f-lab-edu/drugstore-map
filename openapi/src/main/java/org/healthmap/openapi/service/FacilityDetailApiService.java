@@ -68,11 +68,9 @@ public class FacilityDetailApiService {
                 List<CompletableFuture<Void>> allStepList = new ArrayList<>();
                 try {
                     while (!idQueue.isEmpty()) {
-//                        if (idQueue.size() % 500 == 0) {
-//                            log.info("idQueue size : {}", idQueue.size());
-//                        }
-
-                        //TODO: take()로 변경
+                        if (idQueue.size() % 500 == 0) {
+                            log.info("idQueue size : {}", idQueue.size());
+                        }
                         String id = idQueue.poll(10, TimeUnit.SECONDS);
 
                         if (id == null && idQueue.isEmpty()) {
