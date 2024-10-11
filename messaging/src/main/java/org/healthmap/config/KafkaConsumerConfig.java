@@ -2,7 +2,6 @@ package org.healthmap.config;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KafkaConsumerConfig {
     private final TaskExecutorConfig taskExecutorConfig;
+    private final KafkaProperties kafkaProperties;
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String kafkaServer;
@@ -26,7 +26,7 @@ public class KafkaConsumerConfig {
     public Map<String, Object> consumerConfig() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "my-group"); //TODO: 임시 이름
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getGroupId());
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
@@ -46,17 +46,10 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, String> concurrentKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.setConcurrency(3);  //TODO: 차후 변경
+        factory.setConcurrency(10);  //TODO: 차후 변경
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.executor());
 
         return factory;
     }
-
-    // 테스트용
-    @Bean
-    public KafkaConsumer<String, String> manualKafkaConsumer() {
-        return new KafkaConsumer<>(consumerConfig());
-    }
-
 }
