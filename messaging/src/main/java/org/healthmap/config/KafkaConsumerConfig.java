@@ -15,10 +15,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@RequiredArgsConstructor
 public class KafkaConsumerConfig {
     private final TaskExecutorConfig taskExecutorConfig;
     private final KafkaProperties kafkaProperties;
+
+    public KafkaConsumerConfig(TaskExecutorConfig taskExecutorConfig, KafkaProperties kafkaProperties) {
+        this.taskExecutorConfig = taskExecutorConfig;
+        this.kafkaProperties = kafkaProperties;
+    }
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String kafkaServer;
