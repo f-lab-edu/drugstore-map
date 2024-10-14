@@ -8,14 +8,17 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class KafkaProducerService {
     private final KafkaProperties kafkaProperties;
-    private final String topic = kafkaProperties.getTopic();
     private final KafkaTemplate<String, String> kafkaTemplate;
 
+    public KafkaProducerService(KafkaProperties kafkaProperties, KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaProperties = kafkaProperties;
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
     public void sendMessage(String message) {
-        kafkaTemplate.send(topic, message);
+        kafkaTemplate.send(kafkaProperties.getTopic(), message);
         log.info("Sent Message: {}",message);
     }
 }
