@@ -23,6 +23,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
 
+    implementation project(':openapi')
     implementation project(':messaging')
     implementation project(':db')
 }

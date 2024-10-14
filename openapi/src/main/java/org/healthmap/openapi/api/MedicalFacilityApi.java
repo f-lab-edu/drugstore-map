@@ -1,8 +1,12 @@
 package org.healthmap.openapi.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyProperties;
 import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;
 import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.healthmap.openapi.utility.XmlUtils;
@@ -20,9 +24,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -32,13 +42,17 @@ public class MedicalFacilityApi {
     private final int rowSize;          //한 페이지 결과 수
     private final String serviceKey;
     private final String numOfRows;
+    private final HttpClient client;
+    private final ObjectMapper xmlMapper;
 
     public MedicalFacilityApi(KeyProperties keyInfo) {
         this.keyInfo = keyInfo;
         this.page = "&pageNo=";
-        this.rowSize = 30000;
+        this.rowSize = 1000;   //TODO: 변경 예정
         this.serviceKey = "?serviceKey=" + keyInfo.getServerKey();
         this.numOfRows = "&numOfRows=" + rowSize;
+        this.client = HttpClient.newBuilder().build();
+        this.xmlMapper = new XmlMapper();
     }
 
     /**
@@ -54,11 +68,12 @@ public class MedicalFacilityApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
+    //TODO: 변경 예정
     public List<MedicalFacilityDto> getMedicalFacilityInfo(String url, int pageNo) {
         List<MedicalFacilityDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
 
-        int maxRetries = 5; // 최대 재시도 횟수
+        int maxRetries = 3; // 최대 재시도 횟수
         int attempt = 0;
         long waitTime = 1000;
 
@@ -121,6 +136,39 @@ public class MedicalFacilityApi {
         return hospitalDtoList;
     }
 
+    public List<MedicalFacilityXmlDto> getMedicalFacilityInfoTest(String url, int pageNo) {
+        List<MedicalFacilityXmlDto> hospitalDtoList = new ArrayList<>();
+        String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(realUrl))
+                .GET()
+                .build();
+
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+
+            if(statusCode == HttpURLConnection.HTTP_OK) {
+                String body = response.body();
+                JsonNode itemNode = xmlMapper.readTree(body.getBytes())
+                        .get("body")
+                        .get("items")
+                        .get("item");
+                MedicalFacilityXmlDto[] item = xmlMapper.treeToValue(itemNode, MedicalFacilityXmlDto[].class);
+                log.info("items: {}", item.length);
+
+                hospitalDtoList = Arrays.stream(item).collect(Collectors.toList());
+            } else {
+                throw new OpenApiProblemException(OpenApiErrorCode.OPEN_API_REQUEST_ERROR);
+            }
+        } catch (IOException | InterruptedException e){
+            log.error(e.getMessage());
+            throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
+        }
+        return hospitalDtoList;
+    }
+
 
     private Point getPointFromXYPos(String xPos, String yPos) {
         if (xPos == null || yPos == null) {
@@ -137,6 +185,7 @@ public class MedicalFacilityApi {
     //데이터 전체 개수를 반환하는 메서드
     private int getTotalCount(String url) {
         String realUrl = url + serviceKey;
+        log.info("url: {}",url);
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();

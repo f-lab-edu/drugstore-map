@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+//TODO: batch로 변경시 삭제 예정
 @Component
 @Slf4j
 @RequiredArgsConstructor

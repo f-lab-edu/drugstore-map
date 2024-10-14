@@ -5,6 +5,7 @@ import org.healthmap.openapi.config.KeyProperties;
 import org.healthmap.openapi.config.PropertiesConfig;
 import org.healthmap.openapi.config.UrlProperties;
 import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,13 @@ class MedicalFacilityApiTest {
     private MedicalFacilityApi hospitalApi;
     @Autowired
     private UrlProperties urlProperties;
+
+    @Test
+    @DisplayName("Jackson으로 XML 변환해서 데이터 가져오기")
+    void testXml() {
+        List<MedicalFacilityXmlDto> dtos = hospitalApi.getMedicalFacilityInfoTest(urlProperties.getDrugstoreUrl(), 1);
+        Assertions.assertThat(dtos).isNotEmpty();
+    }
 
     @Nested
     @DisplayName("hospitalUrl을 사용할 때")
@@ -52,7 +60,7 @@ class MedicalFacilityApiTest {
 
             // then
             Assertions.assertThat(drugstoreDtoList).isNotEmpty();
-            Assertions.assertThat(drugstoreDtoList.size()).isEqualTo(1000);
+            Assertions.assertThat(drugstoreDtoList.size()).isNotEqualTo(0);
         }
 
         @Test

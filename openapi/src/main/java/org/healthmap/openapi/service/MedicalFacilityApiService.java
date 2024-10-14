@@ -116,8 +116,8 @@ public class MedicalFacilityApiService {
         return deleteIdList;
     }
 
-    // 병원, 약국의 기본정보 데이터를 가져오는 메서드
-    private List<MedicalFacilityDto> getAllMedicalFacility() {
+    // 병원, 약국의 기본정보 데이터를 가져오는 메서드 (Batch에서 사용)
+    public List<MedicalFacilityDto> getAllMedicalFacility() {
         List<MedicalFacilityDto> drugstoreDtoList = getAllDrugstoreInfo();
         List<MedicalFacilityDto> hospitalDtoList = getHospitalInfo();
         drugstoreDtoList.addAll(hospitalDtoList);
