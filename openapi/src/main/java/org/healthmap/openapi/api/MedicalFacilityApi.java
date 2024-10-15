@@ -60,9 +60,7 @@ public class MedicalFacilityApi {
         return pageSize;
     }
 
-    /**
-     * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
-     */
+    //TODO: 제거
     /*public List<MedicalFacilityDto> getMedicalFacilityInfo(String url, int pageNo) {
         List<MedicalFacilityDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
@@ -129,6 +127,10 @@ public class MedicalFacilityApi {
         }
         return hospitalDtoList;
     }*/
+
+    /**
+     * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
+     */
     public CompletableFuture<List<MedicalFacilityXmlDto>> getMedicalFacilityInfoAsync(String url, int pageNo) {
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
         HttpRequest request = HttpRequest.newBuilder()

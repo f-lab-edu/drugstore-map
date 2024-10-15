@@ -1,8 +1,13 @@
 # Ignore Gradle project-specific cache directory
 .gradle
 
+# log
+application.log.*
+application.log
+
 # Ignore Gradle build output directory
 build
 .idea
 **.iml
 application-secret.yml
+

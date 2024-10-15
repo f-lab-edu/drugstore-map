@@ -20,8 +20,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     api 'org.hibernate:hibernate-spatial:6.6.0.Final'
+    api 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0'
     implementation 'com.google.code.gson:gson:2.11.0'   // 차후 제거
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.12.3'
 
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'com.sun.xml.bind:jaxb-core:2.3.0.1'
