@@ -9,12 +9,20 @@ import org.healthmap.openapi.api.MedicalFacilityApi;
 import org.healthmap.openapi.config.UrlProperties;
 import org.healthmap.openapi.converter.MedicalFacilityConverter;
 import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,6 +32,7 @@ public class MedicalFacilityApiService {
     private final UrlProperties urlProperties;
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final MedicalFacilityApi medicalFacilityApi;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     // 기본 병원, 약국 정보 저장
     @Transactional
@@ -65,7 +74,6 @@ public class MedicalFacilityApiService {
         log.info("addNewMedicalFacilityList size : {}", entityList.size());
         return entityList.size();
     }
-
 
     // dto 리스트를 통해 기본정보 update
     private int updateMedicalFacilityList(List<MedicalFacilityDto> medicalFacilityDtoList) {
@@ -118,45 +126,119 @@ public class MedicalFacilityApiService {
 
     // 병원, 약국의 기본정보 데이터를 가져오는 메서드 (Batch에서 사용)
     public List<MedicalFacilityDto> getAllMedicalFacility() {
-        List<MedicalFacilityDto> drugstoreDtoList = getAllDrugstoreInfo();
-        List<MedicalFacilityDto> hospitalDtoList = getHospitalInfo();
+        List<MedicalFacilityDto> drugstoreDtoList = getAllFacilityInfoAsync(urlProperties.getDrugstoreUrl());
+        List<MedicalFacilityDto> hospitalDtoList = getAllFacilityInfoAsync(urlProperties.getHospitalUrl());
         drugstoreDtoList.addAll(hospitalDtoList);
 
-        log.info("total size : {}", drugstoreDtoList.size());
+        log.info("Total size : {}", drugstoreDtoList.size());
         return drugstoreDtoList;
     }
 
-    // 약국의 기본정보 데이터를 가져오는 메서드
-    private List<MedicalFacilityDto> getAllDrugstoreInfo() {
-        List<MedicalFacilityDto> allDrugstoreList = new ArrayList<>();
-        String drugstoreUrl = urlProperties.getDrugstoreUrl();
-        int pageSize = medicalFacilityApi.getPageSize(drugstoreUrl);
+/*    // 약국의 기본정보 데이터를 가져오는 메서드
+    private List<MedicalFacilityDto> getAllFacilityInfo(String url) {
+        List<MedicalFacilityDto> allFacilityList = new ArrayList<>();
+        int pageSize = medicalFacilityApi.getPageSize(url);
 
         for (int i = 1; i <= pageSize; i++) {
-            List<MedicalFacilityDto> medicalFacilityInfo = medicalFacilityApi.getMedicalFacilityInfo(drugstoreUrl, i);
-            allDrugstoreList.addAll(medicalFacilityInfo);
-            if (i == pageSize)
-                log.info("i : {}, size: {}", i, medicalFacilityInfo.size());
+            List<MedicalFacilityDto> medicalFacilityInfo = medicalFacilityApi.getMedicalFacilityInfo(url, i);
+            allFacilityList.addAll(medicalFacilityInfo);
         }
 
-        log.info("allDrugstoreList : {}", allDrugstoreList.size());
-        return allDrugstoreList;
+        log.info("allDrugstoreList : {}", allFacilityList.size());
+        return allFacilityList;
+    }*/
+
+    private List<MedicalFacilityDto> getAllFacilityInfoAsync(String url) {
+        int pageSize = medicalFacilityApi.getPageSize(url);
+        List<CompletableFuture<List<MedicalFacilityDto>>> futureList = new ArrayList<>();
+
+        for (int i = 1; i <= pageSize; i++) {
+            int finalI = i;
+            CompletableFuture<List<MedicalFacilityDto>> future = CompletableFuture.supplyAsync(() -> {
+                        List<MedicalFacilityXmlDto> xmlDtoList = medicalFacilityApi.getMedicalFacilityInfoAsync(url, finalI).join();
+                        if (!xmlDtoList.isEmpty()) {
+                            return convertToFacilityDtoList(xmlDtoList);
+                        } else {
+                            return new ArrayList<MedicalFacilityDto>();
+                        }
+                    }, executorService)
+                    .exceptionally(ex -> {
+                        log.error("진행 중에 오류가 발생했습니다. : {}", ex.getMessage());
+                        return new ArrayList<>();
+                    });
+            futureList.add(future);
+        }
+
+        CompletableFuture<Void> allFuture = CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
+        CompletableFuture<List<MedicalFacilityDto>> listFuture = allFuture.thenApply(x -> {
+            return futureList.stream()
+                    .map(CompletableFuture::join)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+        });
+        List<MedicalFacilityDto> medicalFacilityDtoList = listFuture.join();
+        log.info("전체 크기 : {}", medicalFacilityDtoList.size());
+        return medicalFacilityDtoList;
     }
 
-    // 병원의 기본정보 데이터를 가져오는 메서드
-    private List<MedicalFacilityDto> getHospitalInfo() {
-        List<MedicalFacilityDto> allHospitalDtoList = new ArrayList<>();
-        String hospitalUrl = urlProperties.getHospitalUrl();
-        int pageSize = medicalFacilityApi.getPageSize(hospitalUrl);
+    // XmlDto -> Dto
+    private List<MedicalFacilityDto> convertToFacilityDtoList(List<MedicalFacilityXmlDto> medicalFacilityXmlDtoList) {
+        List<MedicalFacilityDto> medicalFacilityDtoList = new ArrayList<>();
+        for (MedicalFacilityXmlDto dto : medicalFacilityXmlDtoList) {
+            String phoneNumber = checkPhoneNumber(dto.getPhoneNumber());
+            String pageUrl = checkPageUrl(dto.getPageUrl());
+            Point coordinate = getPointFromXYPos(dto.getXPos(), dto.getYPos());
 
-        for (int i = 1; i <= pageSize; i++) {
-            List<MedicalFacilityDto> hospitalDtoList = medicalFacilityApi.getMedicalFacilityInfo(hospitalUrl, i);
-            allHospitalDtoList.addAll(hospitalDtoList);
-            if (i == pageSize)
-                log.info("i : {}, size: {}", i, hospitalDtoList.size());
+            MedicalFacilityDto medicalFacilityDto = new MedicalFacilityDto(dto.getCode(), dto.getName(), dto.getAddress(), phoneNumber, pageUrl, dto.getPostNumber(),
+                    dto.getType(), dto.getState(), dto.getCity(), dto.getTown(), coordinate);
+            medicalFacilityDtoList.add(medicalFacilityDto);
         }
+        return medicalFacilityDtoList;
+    }
 
-        log.info("allHospitalDtoList : {}", allHospitalDtoList.size());
-        return allHospitalDtoList;
+    // 전화번호 형식에 맞는지 확인
+    private String checkPhoneNumber(String phoneNumber) {
+        String phoneNumberPattern1 = "^\\d{2,3}-\\d{3,4}-\\d{4}$";
+        String phoneNumberPattern2 = "^\\d{3,4}-\\d{4}$";
+        Pattern pattern1 = Pattern.compile(phoneNumberPattern1);
+        Pattern pattern2 = Pattern.compile(phoneNumberPattern2);
+
+        if (phoneNumber != null) {
+            if (pattern1.matcher(phoneNumber).matches() || pattern2.matcher(phoneNumber).matches()) {
+                return phoneNumber;
+            } else {
+                return null;
+            }
+        } else {
+            return phoneNumber;
+        }
+    }
+
+    // pageUrl 확인
+    private String checkPageUrl(String pageUrl) {
+        if (pageUrl != null && pageUrl.equals("http://")) {
+            return null;
+        } else {
+            return pageUrl;
+        }
+    }
+
+    // x,y 좌표를 통해 Point 형식으로 변경
+    private Point getPointFromXYPos(String xPos, String yPos) {
+        GeometryFactory geometryFactory = new GeometryFactory();
+        Point point = null;
+        try {
+            if (xPos == null || yPos == null) {
+                point = geometryFactory.createPoint(new Coordinate(0, 0));
+            } else {
+                double x = Double.parseDouble(xPos);
+                double y = Double.parseDouble(yPos);
+                point = geometryFactory.createPoint(new Coordinate(x, y));
+            }
+            point.setSRID(4326);
+        } catch (NumberFormatException e) {
+            point = geometryFactory.createPoint(new Coordinate(0, 0));
+        }
+        return point;
     }
 }

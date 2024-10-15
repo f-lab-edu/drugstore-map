@@ -2,10 +2,13 @@ package org.healthmap.openapi.service;
 
 import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
+import org.healthmap.openapi.dto.MedicalFacilityDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
 
 @SpringBootTest
 class MedicalFacilityServiceApiTest {
@@ -42,5 +45,13 @@ class MedicalFacilityServiceApiTest {
     void updateAllMedicalFacility() {
         int updateCount = medicalFacilityService.updateAllMedicalFacility();
         Assertions.assertThat(updateCount).isNotEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("전체 시설 정보 가져오는지 확인")
+    void testGetAllMedicalFacility() {
+        List<MedicalFacilityDto> all = medicalFacilityService.getAllMedicalFacility();
+        System.out.println(all.get(2));
+        Assertions.assertThat(all).isNotEmpty();
     }
 }

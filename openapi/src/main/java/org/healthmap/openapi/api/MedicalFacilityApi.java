@@ -5,33 +5,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.openapi.config.KeyProperties;
-import org.healthmap.openapi.dto.MedicalFacilityDto;
 import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;
 import org.healthmap.openapi.exception.OpenApiProblemException;
-import org.healthmap.openapi.utility.XmlUtils;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,15 +35,17 @@ public class MedicalFacilityApi {
     private final int rowSize;          //한 페이지 결과 수
     private final String serviceKey;
     private final String numOfRows;
+    private final ExecutorService executorService;
     private final HttpClient client;
     private final ObjectMapper xmlMapper;
 
     public MedicalFacilityApi(KeyProperties keyInfo) {
         this.keyInfo = keyInfo;
         this.page = "&pageNo=";
-        this.rowSize = 1000;   //TODO: 변경 예정
+        this.rowSize = 5000;
         this.serviceKey = "?serviceKey=" + keyInfo.getServerKey();
         this.numOfRows = "&numOfRows=" + rowSize;
+        this.executorService = Executors.newFixedThreadPool(10);
         this.client = HttpClient.newBuilder().build();
         this.xmlMapper = new XmlMapper();
     }
@@ -68,8 +63,7 @@ public class MedicalFacilityApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
-    //TODO: 변경 예정
-    public List<MedicalFacilityDto> getMedicalFacilityInfo(String url, int pageNo) {
+    /*public List<MedicalFacilityDto> getMedicalFacilityInfo(String url, int pageNo) {
         List<MedicalFacilityDto> hospitalDtoList = new ArrayList<>();
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
 
@@ -134,58 +128,54 @@ public class MedicalFacilityApi {
             }
         }
         return hospitalDtoList;
-    }
-
-    public List<MedicalFacilityXmlDto> getMedicalFacilityInfoTest(String url, int pageNo) {
-        List<MedicalFacilityXmlDto> hospitalDtoList = new ArrayList<>();
+    }*/
+    public CompletableFuture<List<MedicalFacilityXmlDto>> getMedicalFacilityInfoAsync(String url, int pageNo) {
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(realUrl))
                 .GET()
                 .build();
 
+        return CompletableFuture.supplyAsync(() -> {
+                    List<MedicalFacilityXmlDto> hospitalDtoList = new ArrayList<>();
+                    try {
+                        return client.send(request, HttpResponse.BodyHandlers.ofString());
+                    } catch (IOException | InterruptedException e) {
+                        log.error(e.getMessage());
+                        throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
+                    }
+                }, executorService)
+                .thenApply(response -> {
+                    int statusCode = response.statusCode();
+                    if (statusCode == HttpURLConnection.HTTP_OK) {
+                        return response.body();
+                    } else {
+                        throw new OpenApiProblemException(OpenApiErrorCode.OPEN_API_REQUEST_ERROR);
+                    }
+                })
+                .thenApply(this::getMedicalFacilityXmlDtos);
+    }
 
+    // XML -> MedicalFacilityXmlDto list
+    private List<MedicalFacilityXmlDto> getMedicalFacilityXmlDtos(String body) {
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            int statusCode = response.statusCode();
+            JsonNode itemNode = xmlMapper.readTree(body.getBytes())
+                    .get("body")
+                    .get("items")
+                    .get("item");
+            MedicalFacilityXmlDto[] item = xmlMapper.treeToValue(itemNode, MedicalFacilityXmlDto[].class);
 
-            if(statusCode == HttpURLConnection.HTTP_OK) {
-                String body = response.body();
-                JsonNode itemNode = xmlMapper.readTree(body.getBytes())
-                        .get("body")
-                        .get("items")
-                        .get("item");
-                MedicalFacilityXmlDto[] item = xmlMapper.treeToValue(itemNode, MedicalFacilityXmlDto[].class);
-                log.info("items: {}", item.length);
-
-                hospitalDtoList = Arrays.stream(item).collect(Collectors.toList());
-            } else {
-                throw new OpenApiProblemException(OpenApiErrorCode.OPEN_API_REQUEST_ERROR);
-            }
-        } catch (IOException | InterruptedException e){
+            return Arrays.stream(item).collect(Collectors.toList());
+        } catch (IOException e) {
             log.error(e.getMessage());
             throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
         }
-        return hospitalDtoList;
-    }
-
-
-    private Point getPointFromXYPos(String xPos, String yPos) {
-        if (xPos == null || yPos == null) {
-            return null;
-        }
-        GeometryFactory geometryFactory = new GeometryFactory();
-        double x = Double.parseDouble(xPos);
-        double y = Double.parseDouble(yPos);
-        Point point = geometryFactory.createPoint(new Coordinate(x, y));
-        point.setSRID(4326);
-        return point;
     }
 
     //데이터 전체 개수를 반환하는 메서드
     private int getTotalCount(String url) {
         String realUrl = url + serviceKey;
-        log.info("url: {}",url);
+        log.info("url: {}", url);
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
@@ -198,16 +188,6 @@ public class MedicalFacilityApi {
             throw new OpenApiProblemException(OpenApiErrorCode.INPUT_OUTPUT_ERROR);
         } catch (Exception e) {
             throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
-        }
-    }
-
-    // 병원 홈페이지를 추출하는 메서드
-    private String getPageUrlFromElement(Element element) {
-        String hospitalUrl = XmlUtils.getStringFromElement("hospUrl", element);
-        if (hospitalUrl != null && hospitalUrl.equals("http://")) {
-            return null;
-        } else {
-            return hospitalUrl;
         }
     }
 }
