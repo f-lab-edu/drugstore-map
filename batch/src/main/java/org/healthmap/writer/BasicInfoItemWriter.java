@@ -2,6 +2,7 @@ package org.healthmap.writer;
 
 import lombok.RequiredArgsConstructor;
 import org.healthmap.config.KafkaProperties;
+import org.healthmap.dto.BasicInfoDto;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -13,16 +14,16 @@ import java.util.concurrent.CompletableFuture;
 
 @Component
 @RequiredArgsConstructor
-public class DetailInfoItemWriter implements ItemWriter<String> {
+public class BasicInfoItemWriter implements ItemWriter<BasicInfoDto> {
+    private final KafkaTemplate<String, BasicInfoDto> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Override
-    public void write(Chunk<? extends String> chunk) throws Exception {
+    public void write(Chunk<? extends BasicInfoDto> chunk) throws Exception {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (String id : chunk.getItems()) {
+        for (BasicInfoDto dto : chunk.getItems()) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                kafkaTemplate.send(kafkaProperties.getDetailTopic(), id);
+                kafkaTemplate.send(kafkaProperties.getBasicTopic(), dto);
             });
             futures.add(future);
         }

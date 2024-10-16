@@ -1,6 +1,5 @@
 package org.healthmap;
 
-import org.healthmap.config.KafkaProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

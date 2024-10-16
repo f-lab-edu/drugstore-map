@@ -237,7 +237,7 @@ public class FacilityDetailApiService {
     }
 
     // 세부정보 데이터 가져오는 메서드
-// Sync
+    // Sync
     private List<FacilityDetailUpdateDto> getFacilityDetailList() {
         List<FacilityDetailUpdateDto> facilityDetailDtoList = new ArrayList<>();
         List<String> allIdList = getAllIdList();    //10만개
