@@ -48,9 +48,8 @@ public class BasicInfoBatchConfig {
     @Bean
     public ItemProcessor<MedicalFacilityDto, BasicInfoDto> basicInfoProcessor() {
         return dto -> {
-            String wtkCoordinate = dto.getCoordinate().toText();
             return new BasicInfoDto(dto.getCode(), dto.getName(), dto.getAddress(), dto.getPhoneNumber(), dto.getPageUrl(),
-                    dto.getPostNumber(), dto.getType(), dto.getState(), dto.getCity(), dto.getTown(), wtkCoordinate);
+                    dto.getPostNumber(), dto.getType(), dto.getState(), dto.getCity(), dto.getTown(), dto.getCoordinate());
         };
     }
 
