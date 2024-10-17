@@ -53,7 +53,7 @@ public class MedicalFacilityApi {
     /**
      * 병원 정보를 pageNo번 페이지에서 rowSize 만큼 가져오는 메서드
      */
-    public CompletableFuture<List<MedicalFacilityXmlDto>> getMedicalFacilityInfoAsync(String url, int pageNo) {
+    public CompletableFuture<List<MedicalFacilityXmlDto>> getMedicalFacilityInfoList(String url, int pageNo) {
         String realUrl = url + serviceKey + numOfRows + page + pageNo;   //실제 호출할 URL
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(realUrl))
@@ -77,11 +77,11 @@ public class MedicalFacilityApi {
                         throw new OpenApiProblemException(OpenApiErrorCode.OPEN_API_REQUEST_ERROR);
                     }
                 })
-                .thenApply(this::getMedicalFacilityXmlDtos);
+                .thenApply(this::getMedicalFacilityXmlDtoList);
     }
 
     // XML -> MedicalFacilityXmlDto list
-    private List<MedicalFacilityXmlDto> getMedicalFacilityXmlDtos(String body) {
+    private List<MedicalFacilityXmlDto> getMedicalFacilityXmlDtoList(String body) {
         try {
             JsonNode itemNode = xmlMapper.readTree(body.getBytes())
                     .get("body")

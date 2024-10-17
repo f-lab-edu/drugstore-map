@@ -62,7 +62,7 @@ public interface MedicalFacilityRepository extends JpaRepository<MedicalFacility
             "m.postNumber = COALESCE(:postNumber, m.postNumber), " +
             "m.coordinate = COALESCE(:coordinate, m.coordinate) " +
             "WHERE m.id = :id")
-    void updateFacilityInfo(
+    void updateBasicInfo(
             @Param("id") String id, @Param("name") String name, @Param("address") String address, @Param("phoneNumber") String phoneNumber,
             @Param("url") String url, @Param("type") String type, @Param("state") String state, @Param("city") String city,
             @Param("town") String town, @Param("postNumber") String postNumber, @Param("coordinate") Point coordinate

@@ -16,4 +16,6 @@ include 'openapi'
 include 'db'
 include 'messaging'
 include 'batch'
+include 'common'
+include 'consumer'
 
