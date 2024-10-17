@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+// 필요없게될 경우 삭제
 @Slf4j
 @Component
 public class RateLimitBucket {

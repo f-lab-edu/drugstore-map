@@ -37,7 +37,7 @@ public class MedicalFacilityApiService {
     // 기본 병원, 약국 정보 저장
     @Transactional
     public int saveAllMedicalFacility() {
-        List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
+        List<MedicalFacilityDto> allDtoList = getAllMedicalFacilityInfo();
         List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(allDtoList);
         medicalFacilityRepository.customSaveAll(entityList);
         return entityList.size();
@@ -54,7 +54,7 @@ public class MedicalFacilityApiService {
     // 기본정보 갱신
     @Transactional
     public int updateAllMedicalFacility() {
-        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacility();
+        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacilityInfo();
         List<String> idList = medicalFacilityRepository.findAllId();
         List<MedicalFacilityDto> updateDtoList = getUpdateDtoList(idList, medicalFacilityDtoList);
 
@@ -65,7 +65,7 @@ public class MedicalFacilityApiService {
     // 새로 추가된 기본 정보 저장
     @Transactional
     public int addNewMedicalFacility() {
-        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacility();
+        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacilityInfo();
         List<String> idList = medicalFacilityRepository.findAllId();
         List<MedicalFacilityDto> newDtoList = getNewMedicalFacilityList(idList, medicalFacilityDtoList);
         List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(newDtoList);
@@ -88,7 +88,7 @@ public class MedicalFacilityApiService {
 
     //삭제할 병원, 약국리스트 반환
     private List<String> getRemovedMedicalFacilityList() {
-        List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
+        List<MedicalFacilityDto> allDtoList = getAllMedicalFacilityInfo();
         List<String> dbIdList = medicalFacilityRepository.findAllId();
         List<String> apiIdList = allDtoList.stream().map(MedicalFacilityDto::getCode).toList();
         return getDeleteIdList(dbIdList, apiIdList);
@@ -124,31 +124,18 @@ public class MedicalFacilityApiService {
         return deleteIdList;
     }
 
-    // 병원, 약국의 기본정보 데이터를 가져오는 메서드 (Batch에서 사용)
-    public List<MedicalFacilityDto> getAllMedicalFacility() {
-        List<MedicalFacilityDto> drugstoreDtoList = getAllFacilityInfoAsync(urlProperties.getDrugstoreUrl());
-        List<MedicalFacilityDto> hospitalDtoList = getAllFacilityInfoAsync(urlProperties.getHospitalUrl());
+    // 병원, 약국의 기본정보 전체 데이터를 가져오는 메서드 (Batch에서 사용)
+    public List<MedicalFacilityDto> getAllMedicalFacilityInfo() {
+        List<MedicalFacilityDto> drugstoreDtoList = getFacilityInfoAsync(urlProperties.getDrugstoreUrl());
+        List<MedicalFacilityDto> hospitalDtoList = getFacilityInfoAsync(urlProperties.getHospitalUrl());
         drugstoreDtoList.addAll(hospitalDtoList);
 
         log.info("Total size : {}", drugstoreDtoList.size());
         return drugstoreDtoList;
     }
 
-/*    // 약국의 기본정보 데이터를 가져오는 메서드
-    private List<MedicalFacilityDto> getAllFacilityInfo(String url) {
-        List<MedicalFacilityDto> allFacilityList = new ArrayList<>();
-        int pageSize = medicalFacilityApi.getPageSize(url);
-
-        for (int i = 1; i <= pageSize; i++) {
-            List<MedicalFacilityDto> medicalFacilityInfo = medicalFacilityApi.getMedicalFacilityInfo(url, i);
-            allFacilityList.addAll(medicalFacilityInfo);
-        }
-
-        log.info("allDrugstoreList : {}", allFacilityList.size());
-        return allFacilityList;
-    }*/
-
-    private List<MedicalFacilityDto> getAllFacilityInfoAsync(String url) {
+    // 약국의 기본정보 데이터를 가져오는 메서드
+    private List<MedicalFacilityDto> getFacilityInfoAsync(String url) {
         int pageSize = medicalFacilityApi.getPageSize(url);
         List<CompletableFuture<List<MedicalFacilityDto>>> futureList = new ArrayList<>();
 
@@ -226,18 +213,19 @@ public class MedicalFacilityApiService {
     // x,y 좌표를 통해 Point 형식으로 변경
     private Point getPointFromXYPos(String xPos, String yPos) {
         GeometryFactory geometryFactory = new GeometryFactory();
-        Point point = null;
+        Point point = geometryFactory.createPoint(new Coordinate(0, 0));
+        point.setSRID(4326);
         try {
-            if (xPos == null || yPos == null) {
-                point = geometryFactory.createPoint(new Coordinate(0, 0));
-            } else {
+            if (xPos != null && yPos != null) {
                 double x = Double.parseDouble(xPos);
                 double y = Double.parseDouble(yPos);
                 point = geometryFactory.createPoint(new Coordinate(x, y));
+                point.setSRID(4326);
             }
-            point.setSRID(4326);
         } catch (NumberFormatException e) {
             point = geometryFactory.createPoint(new Coordinate(0, 0));
+            point.setSRID(4326);
+            return point;
         }
         return point;
     }

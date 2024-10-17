@@ -17,7 +17,7 @@ public class BasicInfoItemReader {
 
     @Bean
     public ItemReader<MedicalFacilityDto> basicInfoListItemReader() {
-        List<MedicalFacilityDto> allList = medicalFacilityApiService.getAllMedicalFacility();
+        List<MedicalFacilityDto> allList = medicalFacilityApiService.getAllMedicalFacilityInfo();
         return new ListItemReader<>(allList);
     }
 }

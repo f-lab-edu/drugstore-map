@@ -4,14 +4,13 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.openapi.api.FacilityDetailInfoApi;
-import org.healthmap.openapi.dto.FacilityDetailJsonDto;
+import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
 import org.healthmap.openapi.pattern.PatternMatcherManager;
 import org.healthmap.openapi.utility.RateLimitBucket;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,23 +39,12 @@ public class FacilityDetailApiService {
         this.idQueue = new LinkedBlockingQueue<>(2000000);
     }
 
-    // 세부정보 저장
-    //TODO: 변경 예정
-    @Transactional
-    public int saveFacilityDetail() {
-        List<FacilityDetailUpdateDto> facilityDetailList = getFacilityDetailListTest();
-
-        int updateSize = updateFacilityDetailList(facilityDetailList);
-        log.info("update end: {}", updateSize);
-        return updateSize;
-    }
-
 
     // 1. API로부터 JsonDTO 가져오기
     // 2. jsonDTO를 updateDTO로 변환
     // 3. repository에 update 진행
     @Transactional
-    public CompletableFuture<Integer> saveFacilityDetailAsync() {
+    public CompletableFuture<Integer> saveFacilityDetail() {
         List<String> allIdList = getAllIdList();
         idQueue.addAll(allIdList);
 
@@ -81,8 +69,8 @@ public class FacilityDetailApiService {
                             continue;
                         }
 
-                        CompletableFuture<FacilityDetailJsonDto> jsonDtoFuture = facilityDetailInfoApi.getFacilityDetailJsonDtoFromApi(id, idQueue);
-                        FacilityDetailJsonDto jsonDto = jsonDtoFuture.join();
+                        CompletableFuture<FacilityDetailDto> jsonDtoFuture = facilityDetailInfoApi.getFacilityDetailDtoFromApi(id, idQueue);
+                        FacilityDetailDto jsonDto = jsonDtoFuture.join();
 
                         CompletableFuture<Void> steps = CompletableFuture.supplyAsync(() -> {
                                     if (jsonDto != null) {
@@ -124,7 +112,7 @@ public class FacilityDetailApiService {
 
 
     // DTO 변환 로직
-    private FacilityDetailUpdateDto convertToUpdateDto(FacilityDetailJsonDto dto) {
+    private FacilityDetailUpdateDto convertToUpdateDto(FacilityDetailDto dto) {
         String noTreatmentSun = checkNoTreatment(dto.getNoTrmtSun());
         String noTreatmentHoliday = checkNoTreatment(dto.getNoTrmtSun());
         String treatmentMon = getTreatmentTime(dto.getTrmtMonStart(), dto.getTrmtMonEnd());
@@ -201,68 +189,6 @@ public class FacilityDetailApiService {
             result = String.format("%s ~ %s", startTime, endTime);
         }
         return result;
-    }
-
-
-    // 세부정보 데이터 가져오는 메서드
-//TODO: 변경 예정
-    private List<FacilityDetailUpdateDto> getFacilityDetailListTest() {
-        List<FacilityDetailUpdateDto> facilityDetailDtoList = Collections.synchronizedList(new ArrayList<>());
-        List<String> allIdList = getAllIdList();    //10만개
-
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (int i = 0; i < allIdList.size(); i++) {
-            int tempI = i;
-            CompletableFuture<Void> future = CompletableFuture
-                    .supplyAsync(() -> facilityDetailInfoApi.getFacilityDetailInfoFromJson(allIdList.get(tempI))
-                            , executorService)
-                    .thenAccept(facilityDetailInfo -> {
-                        if (facilityDetailInfo != null) {
-                            facilityDetailDtoList.add(facilityDetailInfo);
-                        }
-                        log.info("line: {}", tempI);
-                    }).exceptionally(ex -> {
-                        log.error("Error occurred while processing ID: {}", allIdList.get(tempI), ex);
-                        return null;
-                    });
-            futures.add(future);
-        }
-
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        allFutures.join();
-        executorService.shutdown();
-
-        log.info("facilityDetailDtoList: {}", facilityDetailDtoList.size());
-        return facilityDetailDtoList;
-    }
-
-    // 세부정보 데이터 가져오는 메서드
-    // Sync
-    private List<FacilityDetailUpdateDto> getFacilityDetailList() {
-        List<FacilityDetailUpdateDto> facilityDetailDtoList = new ArrayList<>();
-        List<String> allIdList = getAllIdList();    //10만개
-        for (String id : allIdList) {
-            FacilityDetailUpdateDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailInfoFromJson(id);
-            if (facilityDetailInfo != null) {
-                facilityDetailDtoList.add(facilityDetailInfo);
-            }
-        }
-
-        log.info("facilityDetailDtoList: {}", facilityDetailDtoList.size());
-        return facilityDetailDtoList;
-    }
-
-    // DTO 리스트로 update하는 메서드
-    private int updateFacilityDetailList(List<FacilityDetailUpdateDto> facilityDetailDtoList) {
-        for (FacilityDetailUpdateDto dto : facilityDetailDtoList) {
-            medicalFacilityRepository.updateDetail(
-                    dto.getCode(), dto.getParking(), dto.getParkingEtc(), dto.getTreatmentMon(), dto.getTreatmentTue(), dto.getTreatmentWed(),
-                    dto.getTreatmentThu(), dto.getTreatmentFri(), dto.getTreatmentSat(), dto.getTreatmentSun(), dto.getReceiveWeek(),
-                    dto.getReceiveSat(), dto.getLunchWeek(), dto.getLunchSat(), dto.getNoTreatmentSun(), dto.getNoTreatmentHoliday(),
-                    dto.getEmergencyDay(), dto.getEmergencyNight()
-            );
-        }
-        return facilityDetailDtoList.size();
     }
 
     // DTO로 update하는 메서드

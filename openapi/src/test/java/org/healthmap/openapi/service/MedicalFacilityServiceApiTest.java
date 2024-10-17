@@ -50,7 +50,7 @@ class MedicalFacilityServiceApiTest {
     @Test
     @DisplayName("전체 시설 정보 가져오는지 확인")
     void testGetAllMedicalFacility() {
-        List<MedicalFacilityDto> all = medicalFacilityService.getAllMedicalFacility();
+        List<MedicalFacilityDto> all = medicalFacilityService.getAllMedicalFacilityInfo();
         System.out.println(all.get(2));
         Assertions.assertThat(all).isNotEmpty();
     }

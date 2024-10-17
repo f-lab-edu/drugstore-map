@@ -9,7 +9,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
-public class FacilityDetailJsonDto {
+public class FacilityDetailDto {
     private String code;
     private String parkXpnsYn;
     private String parkEtc;

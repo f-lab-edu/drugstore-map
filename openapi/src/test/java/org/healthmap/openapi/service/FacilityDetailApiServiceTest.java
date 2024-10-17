@@ -21,7 +21,7 @@ class FacilityDetailApiServiceTest {
     @DisplayName("세부 정보를 저장하는지 확인")
     @Transactional
     public void saveFacilityDetail() {
-        CompletableFuture<Integer> updateCountFuture = facilityDetailService.saveFacilityDetailAsync();
+        CompletableFuture<Integer> updateCountFuture = facilityDetailService.saveFacilityDetail();
         Integer updateCount = updateCountFuture.join();
         Assertions.assertThat(updateCount).isNotEqualTo(0);
     }
