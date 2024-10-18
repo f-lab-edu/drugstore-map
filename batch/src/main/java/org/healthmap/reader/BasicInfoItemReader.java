@@ -1,7 +1,7 @@
 package org.healthmap.reader;
 
 import lombok.RequiredArgsConstructor;
-import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.service.MedicalFacilityApiService;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.ListItemReader;
@@ -16,8 +16,8 @@ public class BasicInfoItemReader {
     private final MedicalFacilityApiService medicalFacilityApiService;
 
     @Bean
-    public ItemReader<MedicalFacilityDto> basicInfoListItemReader() {
-        List<MedicalFacilityDto> allList = medicalFacilityApiService.getAllMedicalFacility();
+    public ItemReader<BasicInfoDto> basicInfoListItemReader() {
+        List<BasicInfoDto> allList = medicalFacilityApiService.getAllBasicInfo();
         return new ListItemReader<>(allList);
     }
 }

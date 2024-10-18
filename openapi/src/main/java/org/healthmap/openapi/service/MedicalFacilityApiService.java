@@ -5,11 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityEntity;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
+import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.api.MedicalFacilityApi;
 import org.healthmap.openapi.config.UrlProperties;
-import org.healthmap.openapi.converter.MedicalFacilityConverter;
-import org.healthmap.openapi.dto.MedicalFacilityDto;
 import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
+import org.healthmap.openapi.error.OpenApiErrorCode;
+import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -36,9 +38,9 @@ public class MedicalFacilityApiService {
 
     // 기본 병원, 약국 정보 저장
     @Transactional
-    public int saveAllMedicalFacility() {
-        List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
-        List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(allDtoList);
+    public int saveAllBasicInfo() {
+        List<BasicInfoDto> allDtoList = getAllBasicInfo();
+        List<MedicalFacilityEntity> entityList = toMedicalFacilityEntityList(allDtoList);
         medicalFacilityRepository.customSaveAll(entityList);
         return entityList.size();
     }
@@ -54,9 +56,9 @@ public class MedicalFacilityApiService {
     // 기본정보 갱신
     @Transactional
     public int updateAllMedicalFacility() {
-        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacility();
+        List<BasicInfoDto> basicInfoDtoList = getAllBasicInfo();
         List<String> idList = medicalFacilityRepository.findAllId();
-        List<MedicalFacilityDto> updateDtoList = getUpdateDtoList(idList, medicalFacilityDtoList);
+        List<BasicInfoDto> updateDtoList = getUpdateDtoList(idList, basicInfoDtoList);
 
         log.info("update count : {}", updateDtoList.size());
         return updateMedicalFacilityList(updateDtoList);
@@ -65,39 +67,49 @@ public class MedicalFacilityApiService {
     // 새로 추가된 기본 정보 저장
     @Transactional
     public int addNewMedicalFacility() {
-        List<MedicalFacilityDto> medicalFacilityDtoList = getAllMedicalFacility();
+        List<BasicInfoDto> basicInfoDtoList = getAllBasicInfo();
         List<String> idList = medicalFacilityRepository.findAllId();
-        List<MedicalFacilityDto> newDtoList = getNewMedicalFacilityList(idList, medicalFacilityDtoList);
-        List<MedicalFacilityEntity> entityList = MedicalFacilityConverter.toEntityList(newDtoList);
+        List<BasicInfoDto> newDtoList = getNewBasicInfoList(idList, basicInfoDtoList);
+        List<MedicalFacilityEntity> entityList = toMedicalFacilityEntityList(newDtoList);
         medicalFacilityRepository.customSaveAll(entityList);
 
         log.info("addNewMedicalFacilityList size : {}", entityList.size());
         return entityList.size();
     }
 
+    // 병원, 약국의 기본정보 전체 데이터를 가져오는 메서드 (Batch에서 사용)
+    public List<BasicInfoDto> getAllBasicInfo() {
+        List<BasicInfoDto> drugstoreDtoList = getFacilityInfo(urlProperties.getDrugstoreUrl());
+        List<BasicInfoDto> hospitalDtoList = getFacilityInfo(urlProperties.getHospitalUrl());
+        drugstoreDtoList.addAll(hospitalDtoList);
+
+        log.info("Total size : {}", drugstoreDtoList.size());
+        return drugstoreDtoList;
+    }
+
     // dto 리스트를 통해 기본정보 update
-    private int updateMedicalFacilityList(List<MedicalFacilityDto> medicalFacilityDtoList) {
-        for (MedicalFacilityDto dto : medicalFacilityDtoList) {
-            medicalFacilityRepository.updateFacilityInfo(
+    private int updateMedicalFacilityList(List<BasicInfoDto> basicDtoList) {
+        for (BasicInfoDto dto : basicDtoList) {
+            medicalFacilityRepository.updateBasicInfo(
                     dto.getCode(), dto.getName(), dto.getAddress(), dto.getPhoneNumber(), dto.getPageUrl(),
                     dto.getType(), dto.getState(), dto.getCity(), dto.getTown(), dto.getPostNumber(), dto.getCoordinate()
             );
         }
-        return medicalFacilityDtoList.size();
+        return basicDtoList.size();
     }
 
     //삭제할 병원, 약국리스트 반환
     private List<String> getRemovedMedicalFacilityList() {
-        List<MedicalFacilityDto> allDtoList = getAllMedicalFacility();
+        List<BasicInfoDto> allDtoList = getAllBasicInfo();
         List<String> dbIdList = medicalFacilityRepository.findAllId();
-        List<String> apiIdList = allDtoList.stream().map(MedicalFacilityDto::getCode).toList();
+        List<String> apiIdList = allDtoList.stream().map(BasicInfoDto::getCode).toList();
         return getDeleteIdList(dbIdList, apiIdList);
     }
 
     // API에서 가져온 데이터 중 새로 추가된 데이터의 리스트를 반환하는 메서드
-    private List<MedicalFacilityDto> getNewMedicalFacilityList(List<String> idList, List<MedicalFacilityDto> dtoList) {
+    private List<BasicInfoDto> getNewBasicInfoList(List<String> idList, List<BasicInfoDto> dtoList) {
         Set<String> dbIdSet = new HashSet<>(idList);
-        List<MedicalFacilityDto> newDtoList = dtoList.stream()
+        List<BasicInfoDto> newDtoList = dtoList.stream()
                 .filter(dto -> !dbIdSet.contains(dto.getCode()))
                 .collect(Collectors.toList());
         log.info("newDtoList size: {}", newDtoList.size());
@@ -105,9 +117,9 @@ public class MedicalFacilityApiService {
     }
 
     // DB에 포함되어 있는 데이터 중 API에도 있는 데이터의 리스트를 반환 (update)
-    private List<MedicalFacilityDto> getUpdateDtoList(List<String> dbIdList, List<MedicalFacilityDto> apiDtoList) {
+    private List<BasicInfoDto> getUpdateDtoList(List<String> dbIdList, List<BasicInfoDto> apiDtoList) {
         Set<String> dbIdSet = new HashSet<>(dbIdList);
-        List<MedicalFacilityDto> updateIdList = apiDtoList.stream()
+        List<BasicInfoDto> updateIdList = apiDtoList.stream()
                 .filter(dto -> dbIdSet.contains(dto.getCode()))
                 .collect(Collectors.toList());
         log.info("updateList size: {}", updateIdList.size());
@@ -124,42 +136,41 @@ public class MedicalFacilityApiService {
         return deleteIdList;
     }
 
-    // 병원, 약국의 기본정보 데이터를 가져오는 메서드 (Batch에서 사용)
-    public List<MedicalFacilityDto> getAllMedicalFacility() {
-        List<MedicalFacilityDto> drugstoreDtoList = getAllFacilityInfoAsync(urlProperties.getDrugstoreUrl());
-        List<MedicalFacilityDto> hospitalDtoList = getAllFacilityInfoAsync(urlProperties.getHospitalUrl());
-        drugstoreDtoList.addAll(hospitalDtoList);
-
-        log.info("Total size : {}", drugstoreDtoList.size());
-        return drugstoreDtoList;
+    // BasicInfoDto -> Entity
+    private MedicalFacilityEntity toMedicalFacilityEntity(BasicInfoDto dto) {
+        return Optional.ofNullable(dto)
+                .map(x -> MedicalFacilityEntity.of(
+                        dto.getCode(), dto.getName(), dto.getAddress(), dto.getPhoneNumber(), dto.getPageUrl(), dto.getType(),
+                        dto.getState(), dto.getCity(), dto.getTown(), dto.getPostNumber(), dto.getCoordinate(),
+                        null, null, null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null, null))
+                .orElseThrow(() -> new OpenApiProblemException(OpenApiErrorCode.NULL_POINT));
     }
 
-/*    // 약국의 기본정보 데이터를 가져오는 메서드
-    private List<MedicalFacilityDto> getAllFacilityInfo(String url) {
-        List<MedicalFacilityDto> allFacilityList = new ArrayList<>();
+    // BasicInfoDtoList -> EntityList
+    private List<MedicalFacilityEntity> toMedicalFacilityEntityList(List<BasicInfoDto> dtoList) {
+        return Optional.ofNullable(dtoList)
+                .map(x -> x.stream()
+                        .map(this::toMedicalFacilityEntity)
+                        .collect(Collectors.toList())
+                )
+                .orElseThrow(() -> new OpenApiProblemException(OpenApiErrorCode.NULL_POINT));
+    }
+
+
+    // 약국의 기본정보 데이터를 가져오는 메서드
+    private List<BasicInfoDto> getFacilityInfo(String url) {
         int pageSize = medicalFacilityApi.getPageSize(url);
-
-        for (int i = 1; i <= pageSize; i++) {
-            List<MedicalFacilityDto> medicalFacilityInfo = medicalFacilityApi.getMedicalFacilityInfo(url, i);
-            allFacilityList.addAll(medicalFacilityInfo);
-        }
-
-        log.info("allDrugstoreList : {}", allFacilityList.size());
-        return allFacilityList;
-    }*/
-
-    private List<MedicalFacilityDto> getAllFacilityInfoAsync(String url) {
-        int pageSize = medicalFacilityApi.getPageSize(url);
-        List<CompletableFuture<List<MedicalFacilityDto>>> futureList = new ArrayList<>();
+        List<CompletableFuture<List<BasicInfoDto>>> futureList = new ArrayList<>();
 
         for (int i = 1; i <= pageSize; i++) {
             int finalI = i;
-            CompletableFuture<List<MedicalFacilityDto>> future = CompletableFuture.supplyAsync(() -> {
-                        List<MedicalFacilityXmlDto> xmlDtoList = medicalFacilityApi.getMedicalFacilityInfoAsync(url, finalI).join();
+            CompletableFuture<List<BasicInfoDto>> future = CompletableFuture.supplyAsync(() -> {
+                        List<MedicalFacilityXmlDto> xmlDtoList = medicalFacilityApi.getMedicalFacilityInfoList(url, finalI).join();
                         if (!xmlDtoList.isEmpty()) {
                             return convertToFacilityDtoList(xmlDtoList);
                         } else {
-                            return new ArrayList<MedicalFacilityDto>();
+                            return new ArrayList<BasicInfoDto>();
                         }
                     }, executorService)
                     .exceptionally(ex -> {
@@ -169,31 +180,32 @@ public class MedicalFacilityApiService {
             futureList.add(future);
         }
 
+        // 전체 실행 확인
         CompletableFuture<Void> allFuture = CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
-        CompletableFuture<List<MedicalFacilityDto>> listFuture = allFuture.thenApply(x -> {
+        CompletableFuture<List<BasicInfoDto>> listFuture = allFuture.thenApply(x -> {
             return futureList.stream()
                     .map(CompletableFuture::join)
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
         });
-        List<MedicalFacilityDto> medicalFacilityDtoList = listFuture.join();
-        log.info("전체 크기 : {}", medicalFacilityDtoList.size());
-        return medicalFacilityDtoList;
+        List<BasicInfoDto> basicInfoDtoList = listFuture.join();
+        log.info("전체 크기 : {}", basicInfoDtoList.size());
+        return basicInfoDtoList;
     }
 
     // XmlDto -> Dto
-    private List<MedicalFacilityDto> convertToFacilityDtoList(List<MedicalFacilityXmlDto> medicalFacilityXmlDtoList) {
-        List<MedicalFacilityDto> medicalFacilityDtoList = new ArrayList<>();
+    private List<BasicInfoDto> convertToFacilityDtoList(List<MedicalFacilityXmlDto> medicalFacilityXmlDtoList) {
+        List<BasicInfoDto> basicInfoDtoList = new ArrayList<>();
         for (MedicalFacilityXmlDto dto : medicalFacilityXmlDtoList) {
             String phoneNumber = checkPhoneNumber(dto.getPhoneNumber());
             String pageUrl = checkPageUrl(dto.getPageUrl());
             Point coordinate = getPointFromXYPos(dto.getXPos(), dto.getYPos());
 
-            MedicalFacilityDto medicalFacilityDto = new MedicalFacilityDto(dto.getCode(), dto.getName(), dto.getAddress(), phoneNumber, pageUrl, dto.getPostNumber(),
+            BasicInfoDto medicalFacilityDto = new BasicInfoDto(dto.getCode(), dto.getName(), dto.getAddress(), phoneNumber, pageUrl, dto.getPostNumber(),
                     dto.getType(), dto.getState(), dto.getCity(), dto.getTown(), coordinate);
-            medicalFacilityDtoList.add(medicalFacilityDto);
+            basicInfoDtoList.add(medicalFacilityDto);
         }
-        return medicalFacilityDtoList;
+        return basicInfoDtoList;
     }
 
     // 전화번호 형식에 맞는지 확인
@@ -226,18 +238,19 @@ public class MedicalFacilityApiService {
     // x,y 좌표를 통해 Point 형식으로 변경
     private Point getPointFromXYPos(String xPos, String yPos) {
         GeometryFactory geometryFactory = new GeometryFactory();
-        Point point = null;
+        Point point = geometryFactory.createPoint(new Coordinate(0, 0));
+        point.setSRID(4326);
         try {
-            if (xPos == null || yPos == null) {
-                point = geometryFactory.createPoint(new Coordinate(0, 0));
-            } else {
+            if (xPos != null && yPos != null) {
                 double x = Double.parseDouble(xPos);
                 double y = Double.parseDouble(yPos);
                 point = geometryFactory.createPoint(new Coordinate(x, y));
+                point.setSRID(4326);
             }
-            point.setSRID(4326);
         } catch (NumberFormatException e) {
             point = geometryFactory.createPoint(new Coordinate(0, 0));
+            point.setSRID(4326);
+            return point;
         }
         return point;
     }

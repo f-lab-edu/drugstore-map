@@ -2,7 +2,7 @@ package org.healthmap.openapi.service;
 
 import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
-import org.healthmap.openapi.dto.MedicalFacilityDto;
+import org.healthmap.dto.BasicInfoDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ class MedicalFacilityServiceApiTest {
     @DisplayName("전체 기본 정보를 저장한다")
     @Transactional
     void saveAllMedicalFacility() {
-        int i = medicalFacilityService.saveAllMedicalFacility();
+        int i = medicalFacilityService.saveAllBasicInfo();
         Assertions.assertThat(i).isNotEqualTo(0);
     }
 
@@ -50,7 +50,7 @@ class MedicalFacilityServiceApiTest {
     @Test
     @DisplayName("전체 시설 정보 가져오는지 확인")
     void testGetAllMedicalFacility() {
-        List<MedicalFacilityDto> all = medicalFacilityService.getAllMedicalFacility();
+        List<BasicInfoDto> all = medicalFacilityService.getAllBasicInfo();
         System.out.println(all.get(2));
         Assertions.assertThat(all).isNotEmpty();
     }

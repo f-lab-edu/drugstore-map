@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    include:
+      - secret
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
+    username: root
+
+  kafka:
+    bootstrap-servers: localhost:9093
+

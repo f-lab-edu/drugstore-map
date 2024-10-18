@@ -1,7 +1,12 @@
 package org.healthmap.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.healthmap.dto.serializer.PointDeserializer;
+import org.healthmap.dto.serializer.PointSerializer;
+import org.locationtech.jts.geom.Point;
 
 @NoArgsConstructor
 @Getter
@@ -16,9 +21,12 @@ public class BasicInfoDto {
     private String state;       //시도코드명
     private String city;        //시군구코드
     private String town;        //읍면동
-    private String coordinate;   //좌표
 
-    public BasicInfoDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, String coordinate) {
+    @JsonSerialize(using = PointSerializer.class)
+    @JsonDeserialize(using = PointDeserializer.class)
+    private Point coordinate;   //좌표
+
+    public BasicInfoDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, Point coordinate) {
         this.code = code;
         this.name = name;
         this.address = address;

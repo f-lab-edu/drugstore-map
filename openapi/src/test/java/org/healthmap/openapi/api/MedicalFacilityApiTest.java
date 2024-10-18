@@ -30,7 +30,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("데이터 가져오는지 확인")
         public void getHospitalDtoList() {
-            List<MedicalFacilityXmlDto> hospitalDtoList = hospitalApi.getMedicalFacilityInfoAsync(urlProperties.getHospitalUrl(), 1).join();
+            List<MedicalFacilityXmlDto> hospitalDtoList = hospitalApi.getMedicalFacilityInfoList(urlProperties.getHospitalUrl(), 1).join();
             log.info("list size : {}", hospitalDtoList.size());
 
             // then
@@ -54,7 +54,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("DrugstoreUrl으로부터 데이터 가져오는지 확인")
         public void getDrugstoreDtoList() {
-            List<MedicalFacilityXmlDto> drugstoreDtoList = hospitalApi.getMedicalFacilityInfoAsync(urlProperties.getDrugstoreUrl(), 1).join();
+            List<MedicalFacilityXmlDto> drugstoreDtoList = hospitalApi.getMedicalFacilityInfoList(urlProperties.getDrugstoreUrl(), 1).join();
             log.info("list size : {}", drugstoreDtoList.size());
 
             // then

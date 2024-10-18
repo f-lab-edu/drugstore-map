@@ -16,8 +16,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'   // test용도
 
     implementation 'org.springframework.boot:spring-boot-starter'
-    api 'org.springframework.kafka:spring-kafka'
-    api 'org.hibernate:hibernate-spatial:6.6.0.Final'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.hibernate:hibernate-spatial:6.6.0.Final'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -26,6 +26,8 @@ dependencies {
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation project(':common')
 }
 
 test {
