@@ -24,21 +24,21 @@ public class BasicInfoUpdateConsumer {
     private final KafkaTemplate<String, BasicInfoDto> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TransactionTemplate transactionTemplate;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(20);
     private AtomicInteger count = new AtomicInteger(0);     // 동작 확인용
     private AtomicInteger realCount = new AtomicInteger(0); // 동작 확인용
 
     @KafkaListener(topics = "${kafka-config.consumer.basic-topic}",
             groupId = "${kafka-config.consumer.groupId}",
             containerFactory = "basicInfoKafkaListenerContainerFactory")
-    public void listen(BasicInfoDto dto) {
+    public void updateBasicInfo(BasicInfoDto dto) {
         CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                     transactionTemplate.execute(status -> {
                         try {
                             updateMedicalFacility(dto);
                             realCount.incrementAndGet();
-                            if(realCount.get() % 5000 == 0) {
-                                log.info("updated now : {}", realCount.get());
+                            if (realCount.get() % 5000 == 0) {
+                                log.info("updated count : {}", realCount.get());
                             }
                         } catch (Exception e) {
                             log.error("Updating medical facility error: {}", e.getMessage(), e);
@@ -56,7 +56,7 @@ public class BasicInfoUpdateConsumer {
         future.join();
     }
 
-    public void updateMedicalFacility(BasicInfoDto dto) {
+    private void updateMedicalFacility(BasicInfoDto dto) {
         MedicalFacilityEntity entity = medicalFacilityRepository.findById(dto.getCode()).orElse(null);
         if (entity != null) {
             medicalFacilityRepository.updateBasicInfo(entity.getId(), entity.getName(), entity.getAddress(), entity.getPhoneNumber(),
@@ -64,7 +64,7 @@ public class BasicInfoUpdateConsumer {
                     entity.getCoordinate());
         } else {
             count.incrementAndGet();
-            log.info("update 완료 : {}", count.get());
+            log.info("update 개수 : {}", count.get());
         }
     }
 }

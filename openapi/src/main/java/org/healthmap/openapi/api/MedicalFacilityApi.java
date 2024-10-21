@@ -35,7 +35,8 @@ public class MedicalFacilityApi {
     private final int rowSize;          //한 페이지 결과 수
     private final String serviceKey;
     private final String numOfRows;
-    private final ExecutorService executorService;
+    private final ExecutorService openApiExecutorService;
+    private final ExecutorService localExecutorService;
     private final HttpClient client;
     private final ObjectMapper xmlMapper;
 
@@ -45,7 +46,8 @@ public class MedicalFacilityApi {
         this.rowSize = 5000;
         this.serviceKey = "?serviceKey=" + keyInfo.getServerKey();
         this.numOfRows = "&numOfRows=" + rowSize;
-        this.executorService = Executors.newFixedThreadPool(10);
+        this.localExecutorService = Executors.newFixedThreadPool(50);
+        this.openApiExecutorService = Executors.newFixedThreadPool(15);
         this.client = HttpClient.newBuilder().build();
         this.xmlMapper = new XmlMapper();
     }
@@ -68,15 +70,15 @@ public class MedicalFacilityApi {
                         log.error(e.getMessage());
                         throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
                     }
-                }, executorService)
-                .thenApply(response -> {
+                }, openApiExecutorService)
+                .thenApplyAsync(response -> {
                     int statusCode = response.statusCode();
                     if (statusCode == HttpURLConnection.HTTP_OK) {
                         return response.body();
                     } else {
                         throw new OpenApiProblemException(OpenApiErrorCode.OPEN_API_REQUEST_ERROR);
                     }
-                })
+                }, localExecutorService)
                 .thenApply(this::getMedicalFacilityXmlDtoList);
     }
 

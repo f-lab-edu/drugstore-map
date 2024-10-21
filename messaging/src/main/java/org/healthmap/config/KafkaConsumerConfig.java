@@ -62,7 +62,7 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, String> concurrentKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerConfig());
-        factory.setConcurrency(10);  //TODO: 차후 변경
+        factory.setConcurrency(10);  //TODO: partition 개수만큼 차후 변경
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.executor());
 
@@ -73,9 +73,19 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> basicInfoKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(basicInfoConsumerConfig());
-        factory.setConcurrency(10); //TODO: partition 개수만큼?
+        factory.setConcurrency(10); //TODO: partition 개수만큼
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.executor());
         //TODO: ACK를 수동? 자동?
+
+        return factory;
+    }   
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> saveBasicInfoContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(basicInfoConsumerConfig());
+        factory.setConcurrency(10);
+        factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.saveExecutor());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         return factory;
     }
