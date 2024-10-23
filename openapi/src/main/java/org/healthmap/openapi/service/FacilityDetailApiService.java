@@ -1,26 +1,19 @@
 package org.healthmap.openapi.service;
 
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.openapi.api.FacilityDetailInfoApi;
 import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
 import org.healthmap.openapi.pattern.PatternMatcherManager;
-import org.healthmap.openapi.utility.RateLimitBucket;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -29,84 +22,30 @@ public class FacilityDetailApiService {
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final PatternMatcherManager patternMatcherManager;
     private final ExecutorService executorService;
-    private final BlockingQueue<String> idQueue;
 
-    public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager, RateLimitBucket rateLimitBucket) {
+    public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager) {
         this.facilityDetailInfoApi = facilityDetailInfoApi;
         this.medicalFacilityRepository = medicalFacilityRepository;
         this.patternMatcherManager = patternMatcherManager;
-        this.executorService = Executors.newFixedThreadPool(100);
-        this.idQueue = new LinkedBlockingQueue<>(2000000);
+        this.executorService = Executors.newFixedThreadPool(50);
     }
 
 
     // 1. API로부터 JsonDTO 가져오기
     // 2. jsonDTO를 updateDTO로 변환
     // 3. repository에 update 진행
-    @Transactional
-    public CompletableFuture<Integer> saveFacilityDetail() {
-        List<String> allIdList = getAllIdList();
-        idQueue.addAll(allIdList);
-
-        AtomicInteger updateCount = new AtomicInteger(0);
-        List<CompletableFuture<Void>> futureList = new ArrayList<>();
-
-        for (int i = 0; i < 10; i++) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                List<CompletableFuture<Void>> allStepList = new ArrayList<>();
-                try {
-                    while (!idQueue.isEmpty()) {
-                        if (idQueue.size() % 500 == 0) {
-                            log.info("idQueue size : {}", idQueue.size());
-                        }
-                        String id = idQueue.poll(10, TimeUnit.SECONDS);
-
-                        if (id == null && idQueue.isEmpty()) {
-                            log.info("idQueue is empty");
-                            break;
-                        } else if (id == null) {
-                            log.info("id: null");
-                            continue;
-                        }
-
-                        CompletableFuture<FacilityDetailDto> jsonDtoFuture = facilityDetailInfoApi.getFacilityDetailDtoFromApi(id, idQueue);
-                        FacilityDetailDto jsonDto = jsonDtoFuture.join();
-
-                        CompletableFuture<Void> steps = CompletableFuture.supplyAsync(() -> {
-                                    if (jsonDto != null) {
-                                        return convertToUpdateDto(jsonDto);
-                                    } else {
-                                        return null;
-                                    }
-                                }, executorService)
-                                .thenAccept(updateDto -> {
-                                    if (updateDto != null) {
-                                        updateFacilityDetail(updateDto);
-                                        updateCount.incrementAndGet();
-                                    }
-                                })
-                                .exceptionally(ex -> {
-                                    log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
-                                    idQueue.add(id);
-                                    return null;
-                                });
-                        allStepList.add(steps);
-
+    public CompletableFuture<FacilityDetailUpdateDto> getFacilityDetailInfo(String id) {
+        return facilityDetailInfoApi.getFacilityDetailDtoFromApi(id)
+                .thenApplyAsync(facilityDetailDto -> {
+                    if(facilityDetailDto != null) {
+                        return convertToUpdateDto(facilityDetailDto);
+                    } else {
+                        return null;
                     }
-                } catch (InterruptedException e) {
-                    log.error("Queue 처리 중 인터럽트 발생: {}", e.getMessage());
-                }
-                log.info("step allOf 실행 시작");
-                CompletableFuture<Void> allStepFuture = CompletableFuture.allOf(allStepList.toArray(new CompletableFuture[0]));
-                allStepFuture.join();
-            }, executorService);
-            futureList.add(future);
-        }
-        log.info("return 문 작업 시작");
-        return CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]))
-                .thenApply(v -> {
-                    log.info("updateSize : {}", updateCount.get());
-                    return updateCount.get();
+                }, executorService)
+                .exceptionally(ex -> {
+                    log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
+                    throw new RuntimeException(ex);
                 });
     }
 

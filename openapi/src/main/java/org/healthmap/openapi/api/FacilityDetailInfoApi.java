@@ -9,15 +9,13 @@ import org.healthmap.openapi.config.UrlProperties;
 import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;
 import org.healthmap.openapi.exception.OpenApiProblemException;
-import org.healthmap.openapi.pattern.PatternMatcherManager;
-import org.healthmap.openapi.utility.RateLimitBucket;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,17 +25,13 @@ import java.util.concurrent.Executors;
 public class FacilityDetailInfoApi {
     private final KeyProperties keyProperties;
     private final UrlProperties urlProperties;
-    private final PatternMatcherManager patternMatcherManager;
     private final ObjectMapper objectMapper;
-    private final RateLimitBucket rateLimitBucket;
     private final ExecutorService executorService;
     private final HttpClient client;
 
-    public FacilityDetailInfoApi(KeyProperties keyProperties, UrlProperties urlProperties, PatternMatcherManager patternMatcherManager, RateLimitBucket rateLimitBucket) {
+    public FacilityDetailInfoApi(KeyProperties keyProperties, UrlProperties urlProperties) {
         this.keyProperties = keyProperties;
         this.urlProperties = urlProperties;
-        this.patternMatcherManager = patternMatcherManager;
-        this.rateLimitBucket = rateLimitBucket;
         this.objectMapper = new ObjectMapper();
         this.executorService = Executors.newFixedThreadPool(10);
         this.client = HttpClient.newBuilder().build();
@@ -45,12 +39,11 @@ public class FacilityDetailInfoApi {
 
     // OpenApi로부터 데이터 받아오는 역할만 부여
     // TODO: consumer 사용시 변경 해야함
-    public CompletableFuture<FacilityDetailDto> getFacilityDetailDtoFromApi(String code, Queue<String> idQueue) {
+    public CompletableFuture<FacilityDetailDto> getFacilityDetailDtoFromApi(String code) {
         String apiUrl = urlProperties.getDetailUrl()
                 + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
                 + "&ykiho=" + code
                 + "&_type=json";
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .GET()
@@ -58,18 +51,18 @@ public class FacilityDetailInfoApi {
 
         return CompletableFuture.supplyAsync(() -> {
                     try {
-                        rateLimitBucket.consumeWithBlock(1);
-                        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-                    } catch (InterruptedException e) {
+                        return client.send(request, HttpResponse.BodyHandlers.ofString());
+                    } catch (InterruptedException | IOException e) {
                         log.error(e.getMessage());
-                        throw new RuntimeException("Rate limit exceeded", e);
+                        throw new RuntimeException("getFacilityDetailFromApi method error", e);
                     }
-                }, executorService).thenCompose(future -> future)
+                }, executorService)
                 .thenApply(HttpResponse::body)
                 .thenApply(this::getFacilityDetailJsonDto)
                 .thenApply(x -> {
                     if (x != null) {
                         x.saveCodeIntoDto(code);
+                        return x;
                     }
                     return x;
                 })
@@ -77,14 +70,12 @@ public class FacilityDetailInfoApi {
                     if (ex.getMessage().contains("LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR")) {
                         log.warn("초당 요청 한도 초과, 재시도...");
                         // 재시도 로직 또는 지연 후 재시도
-                        idQueue.add(code);
-                        return null;
+                        throw new OpenApiProblemException(OpenApiErrorCode.TOO_MANY_TRY);
                     }
                     log.error("error 발생, null 반환: {}", ex.getMessage());
-                    return null;
+                    throw new OpenApiProblemException(OpenApiErrorCode.SERVER_ERROR);
                 });
     }
-
 
     private FacilityDetailDto getFacilityDetailJsonDto(String jsonBody) {
         FacilityDetailDto facilityDetailDto = null;

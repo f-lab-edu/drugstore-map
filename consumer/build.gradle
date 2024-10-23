@@ -27,6 +27,7 @@ dependencies {
     implementation project(':db')
     implementation project(':common')
     implementation project(':messaging')
+    implementation project(':openapi')
 }
 
 test {

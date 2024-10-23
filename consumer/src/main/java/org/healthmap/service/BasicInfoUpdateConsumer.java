@@ -32,7 +32,7 @@ public class BasicInfoUpdateConsumer {
             groupId = "${kafka-config.consumer.groupId}",
             containerFactory = "basicInfoKafkaListenerContainerFactory")
     public void updateBasicInfo(BasicInfoDto dto) {
-        CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
                     transactionTemplate.execute(status -> {
                         try {
                             updateMedicalFacility(dto);
@@ -53,7 +53,6 @@ public class BasicInfoUpdateConsumer {
                         kafkaTemplate.send(kafkaProperties.getUpdateTopic(), basicInfoDto);
                     }
                 });
-        future.join();
     }
 
     private void updateMedicalFacility(BasicInfoDto dto) {

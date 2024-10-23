@@ -59,10 +59,10 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> concurrentKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, String> stringKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerConfig());
-        factory.setConcurrency(10);  //TODO: partition 개수만큼 차후 변경
+        factory.setConcurrency(5);  //TODO: partition 개수만큼 차후 변경
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.executor());
 
@@ -83,7 +83,7 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> saveBasicInfoContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, BasicInfoDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(basicInfoConsumerConfig());
-        factory.setConcurrency(10);
+        factory.setConcurrency(5);
         factory.getContainerProperties().setListenerTaskExecutor(taskExecutorConfig.saveExecutor());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
