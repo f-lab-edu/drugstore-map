@@ -31,6 +31,7 @@ public class DetailInfoUpdateConsumer {
     private final FacilityDetailApiService facilityDetailApiService;
     private final ExecutorService executorService = Executors.newFixedThreadPool(20);
     private AtomicInteger count = new AtomicInteger(0);     // 동작 확인용
+    private AtomicInteger updateCount = new AtomicInteger(0);
 
     @KafkaListener(topics = "${kafka-config.consumer.detail-topic}",
             groupId = "${kafka-config.consumer.detail-groupId}",
@@ -39,12 +40,12 @@ public class DetailInfoUpdateConsumer {
         String id = record.value().getCode();
         facilityDetailApiService.getFacilityDetailInfo(id)
                 .thenAccept(dto -> {
-                    if(dto != null) {
+                    if (dto != null) {
                         Boolean transaction = transactionTemplate.execute(status -> {
                             try {
                                 updateFacilityDetail(dto);
                                 count.incrementAndGet();
-                                if(count.get() != 0 && count.get() % 100 == 0) {
+                                if (count.get() != 0 && count.get() % 100 == 0) {
                                     log.info("updated detail count : {}", count.get());
                                 }
                                 return true;
@@ -83,6 +84,19 @@ public class DetailInfoUpdateConsumer {
             log.error("nack failed: {}", e.getMessage(), e);
         }
     }
+
+    //TODO: 사용할지 말지 결정
+    private int getRetryCount(ConsumerRecord<String, BasicInfoDto> record) {
+        return record.headers().lastHeader("retry-count") != null
+                ? Integer.parseInt(new String(record.headers().lastHeader("retry-count").value()))
+                : 0;
+    }
+
+    //TODO: 사용할지 말지 결정
+    private void addRetryCount(ConsumerRecord<String, BasicInfoDto> record, int count) {
+        record.headers().add("retry-count", Integer.toString(count).getBytes());
+    }
+
 
     private void updateFacilityDetail(FacilityDetailUpdateDto dto) {
         medicalFacilityRepository.updateDetail(

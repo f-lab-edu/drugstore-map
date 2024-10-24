@@ -38,7 +38,6 @@ public class FacilityDetailInfoApi {
     }
 
     // OpenApi로부터 데이터 받아오는 역할만 부여
-    // TODO: consumer 사용시 변경 해야함
     public CompletableFuture<FacilityDetailDto> getFacilityDetailDtoFromApi(String code) {
         String apiUrl = urlProperties.getDetailUrl()
                 + "?serviceKey=" + keyProperties.getServerKey()    //Service Key
