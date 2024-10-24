@@ -10,7 +10,8 @@ public enum OpenApiErrorCode {
     SERVER_ERROR(500, 500, "서버 에러"),
     INPUT_OUTPUT_ERROR(400, 4000, "잘못 전송된 입력값"),
     NULL_POINT(500, 5001, "Null Point"),
-    OPEN_API_REQUEST_ERROR(500, 5002, "Open Api Request 에러");
+    OPEN_API_REQUEST_ERROR(500, 5002, "Open Api Request 에러"),
+    TOO_MANY_TRY(500, 5003, "Too Many Try");
 
     private final int httpStateCode;
     private final int errorCode;

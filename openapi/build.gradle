@@ -12,22 +12,17 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.hibernate:hibernate-spatial:6.6.0.Final'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0'
-    implementation 'com.google.code.gson:gson:2.11.0'   // 차후 제거
+    implementation 'com.google.code.gson:gson:2.11.0'
 
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'com.sun.xml.bind:jaxb-core:2.3.0.1'
     implementation 'com.sun.xml.bind:jaxb-impl:2.3.0.1'
-
-    //rate limiter
-    implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
