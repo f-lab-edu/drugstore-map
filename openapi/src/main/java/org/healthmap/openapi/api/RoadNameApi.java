@@ -26,7 +26,7 @@ public class RoadNameApi {
     private final KeyProperties keyProperties;
     private final UrlProperties urlProperties;
 
-    public String getCoordinateFromMapApi(String address) {
+    public String getNewAddressFromApi(String address) {
         String result = null;
         StringBuilder urlStr = new StringBuilder(urlProperties.getRoadAddressUrl())
                 .append("?confmKey=" + keyProperties.getRoadAddressKey())
@@ -57,7 +57,7 @@ public class RoadNameApi {
         return result;
     }
 
-    public String getStringFromJson(JsonObject jsonObject, String tagName) {
+    private String getStringFromJson(JsonObject jsonObject, String tagName) {
         if (jsonObject.has(tagName)) {
             return jsonObject.get(tagName).getAsString();
         } else {

@@ -30,19 +30,24 @@ class RoadNameApiTest {
         testAddress.add("경기도 화성시 동탄대로 469-12, 2층 2002호 (오산동, 동탄역 린스트라우스)");
 
         for (String str : testAddress) {
+            System.out.println("-----------------------------------");
+
             str = str.split(",")[0];
-            String roadAddress = roadNameApi.getCoordinateFromMapApi(str);
-            System.out.println("------");
+            String roadAddress = roadNameApi.getNewAddressFromApi(str);
             if(roadAddress == null) {
                 str = str.split("-")[0];
-                roadAddress = roadNameApi.getCoordinateFromMapApi(str);
+                roadAddress = roadNameApi.getNewAddressFromApi(str);
+            } else {
+                logger.info("first " + roadAddress);
+                continue;
             }
             if(roadAddress == null){
                 String[] tempStr = str.split(" ");
                 str = str.replace(tempStr[tempStr.length-1], "");
-                System.out.println(str);
+                logger.info("no roadAddress : " + str);
+            } else {
+                logger.info("second " + roadAddress);
             }
-            logger.info(roadAddress);
         }
 
     }

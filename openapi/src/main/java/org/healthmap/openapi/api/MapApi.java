@@ -18,6 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -28,6 +29,9 @@ public class MapApi {
     private final UrlProperties urlProperties;
 
     public List<Double> getCoordinateFromMapApi(String address) {
+        if(address == null){
+            return Collections.emptyList();
+        }
         List<Double> coordinateList = new ArrayList<>();        //x, y 순서로 저장
         StringBuilder urlStr = new StringBuilder(urlProperties.getMapAddressUrl())
                 .append("?query=")

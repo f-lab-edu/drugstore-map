@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.healthmap.config.KafkaProperties;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
@@ -24,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class DetailInfoUpdateConsumer {
-    private final KafkaProperties kafkaProperties;
     private final TransactionTemplate transactionTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MedicalFacilityRepository medicalFacilityRepository;
@@ -64,7 +62,7 @@ public class DetailInfoUpdateConsumer {
                 })
                 .exceptionally(ex -> {
                     log.error("update detail error in exceptionally: {}", ex.getMessage(), ex);
-                    handleException(ack, record, consumer);
+                    handleException(record, consumer);
                     return null;
                 });
     }
@@ -73,11 +71,11 @@ public class DetailInfoUpdateConsumer {
         if (transaction != null && transaction) {
             ack.acknowledge();
         } else {
-            handleException(ack, record, consumer);
+            handleException(record, consumer);
         }
     }
 
-    private static void handleException(Acknowledgment ack, ConsumerRecord<String, BasicInfoDto> record, Consumer<?, ?> consumer) {
+    private static void handleException(ConsumerRecord<String, BasicInfoDto> record, Consumer<?, ?> consumer) {
         try {
             consumer.seek(new TopicPartition(record.topic(), record.partition()), record.offset());
         } catch (Exception e) {

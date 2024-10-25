@@ -1,6 +1,5 @@
 package org.healthmap.openapi.service;
 
-import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
 import org.healthmap.dto.BasicInfoDto;
 import org.junit.jupiter.api.DisplayName;
