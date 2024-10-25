@@ -13,22 +13,17 @@ public class CustomMedicalFacilityRepositoryImpl implements CustomMedicalFacilit
     private final EntityManager em;
 
     @Override
-    public void customSaveAll(List<MedicalFacilityEntity> entityList) {
-        for (MedicalFacilityEntity entity : entityList) {
-            em.persist(entity);
-        }
-        em.flush();
-        em.clear();
-    }
-
-    @Override
     public List<Object[]> findNearMedicalFacility(double latitude, double longitude, int range) {
-        String nativeQuery = "SELECT m.*, " +
+        String nativeQuery = "SELECT m.id, m.name, m.address, m.phone_number, m.url, m.type, m.state, m.city, " +
+                "m.town, m.post_number, m.coordinate, m.parking, m.parking_etc, m.treatment_mon, m.treatment_tue, " +
+                "m.treatment_wed, m.treatment_thu, m.treatment_fri, m.treatment_sat, m.treatment_sun, m.receive_week, " +
+                "m.receive_sat, m.lunch_week, m.lunch_sat, m.no_treatment_sun, m.no_treatment_holiday, m.emergency_day, " +
+                "m.emergency_night, " +
                 "ST_Distance_Sphere(ST_GeomFromText(CONCAT('POINT(', ?1, ' ', ?2, ')'), 4326), coordinate) AS distance " +
                 "FROM medical_facility m " +
                 "WHERE ST_Distance_Sphere(ST_GeomFromText(CONCAT('POINT(', ?1, ' ', ?2, ')'), 4326), coordinate) <= ?3 " +
                 "ORDER BY distance limit 30";
-        Query query = em.createNativeQuery(nativeQuery, "MedicalFacilityMapping");
+        Query query = em.createNativeQuery(nativeQuery);
         query.setParameter(1, latitude);
         query.setParameter(2, longitude);
         query.setParameter(3, range * 1000);
