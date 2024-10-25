@@ -1,9 +1,11 @@
 package org.healthmap.openapi.service;
 
-import jakarta.transaction.Transactional;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
+import org.healthmap.dto.BasicInfoDto;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -13,11 +15,15 @@ class MapApiServiceTest {
     MapApiService mapApiService;
 
     @Test
-    @DisplayName("비어있는 좌표를 Map API를 통해 채우기")
-    @Transactional
-    void fillNullCoordinate() {
-        int size = mapApiService.fillCoordinateFromMapApi();
-        System.out.println("update size : " + size);
-        Assertions.assertThat(size).isNotZero();
+    void getCoordinate() {
+        Point point = new GeometryFactory().createPoint(new Coordinate(0, 0));
+        point.setSRID(4326);
+        BasicInfoDto basicInfoDto = new BasicInfoDto(
+                "test", "테스트", "서울특별시 노원구 공릉로43길 1, 104호 (공릉동)", "010-1234-4567", "http://test.com",
+                "13246", "테스트", "서울", "노원구", "공릉로", point);
+        BasicInfoDto coordinate = mapApiService.getCoordinate(basicInfoDto);
+        System.out.println(coordinate.toString());
+
+        Assertions.assertThat(coordinate.getCoordinate()).isNotEqualTo(point);
     }
 }
