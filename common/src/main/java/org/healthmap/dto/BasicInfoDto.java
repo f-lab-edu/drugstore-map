@@ -39,4 +39,8 @@ public class BasicInfoDto {
         this.town = emdongName;
         this.coordinate = coordinate;
     }
+
+    public void changeCoordinate(Point point) {
+        this.coordinate = point;
+    }
 }

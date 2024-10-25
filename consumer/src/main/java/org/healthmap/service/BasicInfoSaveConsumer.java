@@ -8,6 +8,7 @@ import org.healthmap.config.KafkaProperties;
 import org.healthmap.db.medicalfacility.MedicalFacilityEntity;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.dto.BasicInfoDto;
+import org.healthmap.openapi.service.MapApiService;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -25,15 +26,16 @@ public class BasicInfoSaveConsumer {
     private final KafkaTemplate<String, BasicInfoDto> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final MedicalFacilityRepository medicalFacilityRepository;
-    private final GeometryFactory geometryFactory;
+    private final MapApiService mapApiService;
     private final Point dummyPoint;
     private AtomicInteger count = new AtomicInteger(0); // 동작 확인용
 
-    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityRepository medicalFacilityRepository) {
+    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityRepository medicalFacilityRepository, MapApiService mapApiService) {
         this.kafkaTemplate = kafkaTemplate;
         this.kafkaProperties = kafkaProperties;
         this.medicalFacilityRepository = medicalFacilityRepository;
-        this.geometryFactory = new GeometryFactory();
+        this.mapApiService = mapApiService;
+        GeometryFactory geometryFactory = new GeometryFactory();
         this.dummyPoint = geometryFactory.createPoint(new Coordinate(0, 0));
         this.dummyPoint.setSRID(4326);
     }
@@ -59,17 +61,19 @@ public class BasicInfoSaveConsumer {
 
     private void saveMedicalFacility(BasicInfoDto dto, MedicalFacilityEntity entity) {
         if (entity == null) {
-            checkPointZero(dto);
-            MedicalFacilityEntity saveEntity = convertDtoToEntity(dto);
+            BasicInfoDto basicInfoDto = checkCoordinate(dto);
+            MedicalFacilityEntity saveEntity = convertDtoToEntity(basicInfoDto);
             medicalFacilityRepository.save(saveEntity);
             count.incrementAndGet();
             log.info("save count : {}", count.get());
         }
     }
 
-    private void checkPointZero(BasicInfoDto dto) {
+    private BasicInfoDto checkCoordinate(BasicInfoDto dto) {
         if (dto.getCoordinate().equalsExact(dummyPoint)) {
-
+            return mapApiService.getCoordinate(dto);
+        } else {
+            return dto;
         }
     }
 

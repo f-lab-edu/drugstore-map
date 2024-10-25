@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-
 public class MapApiService {
     private final MapApi mapApi;
     private final RoadNameApi roadNameApi;
@@ -27,22 +26,24 @@ public class MapApiService {
         this.geometryFactory = new GeometryFactory();
     }
 
-    public Point getCoordinate(BasicInfoDto dto) {
+    public BasicInfoDto getCoordinate(BasicInfoDto dto) {
         MapApiRequestDto mapApiRequestDto = basicDtoToMapApiRequestDto(dto);
-        return getCoordinateFromMapApi(mapApiRequestDto);
+        Point coordinate = getCoordinateFromMapApi(mapApiRequestDto);
+        dto.changeCoordinate(coordinate);
+        return dto;
     }
 
     private Point getCoordinateFromMapApi(MapApiRequestDto mapApiRequestDto) {
         Point zero = geometryFactory.createPoint(new Coordinate(0, 0));
 
-        if(mapApiRequestDto.getAddress() == null){
+        if (mapApiRequestDto.getAddress() == null) {
             return zero;
         }
 
         // 세부정보 삭제
         String address = mapApiRequestDto.getAddress().split(",")[0];
         Optional<Point> point = getPointFromAddress(address);
-        if(point.isPresent()) {
+        if (point.isPresent()) {
             return point.get();
         }
 
@@ -69,7 +70,7 @@ public class MapApiService {
 
     private static String removeLastPart(String address) {
         String[] splitAddress = address.split(" ");
-        return address.replace(splitAddress[splitAddress.length-1], "");
+        return address.replace(splitAddress[splitAddress.length - 1], "");
     }
 
     private Optional<Point> getPointFromAddress(String newAddress) {
