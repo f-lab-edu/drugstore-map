@@ -13,8 +13,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,63 +25,45 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class DetailInfoUpdateConsumer {
-    private final TransactionTemplate transactionTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final TransactionTemplate transactionTemplate;
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final FacilityDetailApiService facilityDetailApiService;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(20);
-    private AtomicInteger count = new AtomicInteger(0);     // 동작 확인용
-    private AtomicInteger updateCount = new AtomicInteger(0);
+    private final AtomicInteger count = new AtomicInteger(0);     // 동작 확인용
 
     @KafkaListener(topics = "${kafka-config.consumer.detail-topic}",
             groupId = "${kafka-config.consumer.detail-groupId}",
             containerFactory = "saveBasicInfoContainerFactory")
-    public void updateDetailInfo(ConsumerRecord<String, BasicInfoDto> record, Acknowledgment ack, Consumer<?, ?> consumer) {
+    public void updateDetailInfo(ConsumerRecord<String, BasicInfoDto> record, Acknowledgment ack) {
         String id = record.value().getCode();
-        facilityDetailApiService.getFacilityDetailInfo(id)
-                .thenAccept(dto -> {
-                    if (dto != null) {
-                        Boolean transaction = transactionTemplate.execute(status -> {
-                            try {
-                                updateFacilityDetail(dto);
-                                count.incrementAndGet();
-                                if (count.get() != 0 && count.get() % 100 == 0) {
-                                    log.info("updated detail count : {}", count.get());
-                                }
-                                return true;
-                            } catch (Exception e) {
-                                log.error("update detail error : {}", e.getMessage(), e);
-                                status.setRollbackOnly();
-                                return false;
-                            }
-                        });
-                        handleTransaction(ack, record, consumer, transaction);
-                    }
-                })
-                .thenRun(() -> {
-                    // 개수 확인용
-                    kafkaTemplate.send("check", String.valueOf(count.get()));
-                })
-                .exceptionally(ex -> {
-                    log.error("update detail error in exceptionally: {}", ex.getMessage(), ex);
-                    handleException(record, consumer);
-                    return null;
-                });
-    }
-
-    private static void handleTransaction(Acknowledgment ack, ConsumerRecord<String, BasicInfoDto> record, Consumer<?, ?> consumer, Boolean transaction) {
-        if (transaction != null && transaction) {
-            ack.acknowledge();
-        } else {
-            handleException(record, consumer);
-        }
-    }
-
-    private static void handleException(ConsumerRecord<String, BasicInfoDto> record, Consumer<?, ?> consumer) {
         try {
-            consumer.seek(new TopicPartition(record.topic(), record.partition()), record.offset());
+            FacilityDetailUpdateDto detailUpdateDto = facilityDetailApiService.getFacilityDetailInfo(id).join();
+            if (detailUpdateDto != null) {
+                Boolean transaction = transactionTemplate.execute(status -> {
+                    try {
+                        updateFacilityDetail(detailUpdateDto);
+                        count.incrementAndGet();
+                        if (count.get() != 0 && count.get() % 100 == 0) {
+                            log.info("updated detail count : {}", count.get());
+                        }
+                        return true;
+                    } catch (Exception e) {
+                        log.error("update detail error : {}", e.getMessage(), e);
+                        status.setRollbackOnly();
+                        return false;
+                    }
+                });
+                if(!transaction){
+                    ack.nack(Duration.ofMillis(500));
+                    return;
+                }
+            }
+            // 개수 확인용
+            kafkaTemplate.send("check", String.valueOf(count.get()));
+            ack.acknowledge();
         } catch (Exception e) {
-            log.error("nack failed: {}", e.getMessage(), e);
+            log.error("update detail error : {}", e.getMessage(), e);
+            ack.nack(Duration.ofMillis(500));
         }
     }
 

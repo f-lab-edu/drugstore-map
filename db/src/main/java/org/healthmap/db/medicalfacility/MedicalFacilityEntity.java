@@ -15,7 +15,7 @@ import org.locationtech.jts.geom.Point;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "medical_facility")
-public class MedicalFacilityEntity {
+public class MedicalFacilityEntity extends BaseEntity{
     @Id
     private String id;
 

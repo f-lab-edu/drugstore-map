@@ -63,7 +63,9 @@ public class BasicInfoUpdateConsumer {
                     entity.getCoordinate());
         } else {
             count.incrementAndGet();
-            log.info("update 개수 : {}", count.get());
+            if(count.get() != 0 && count.get() % 1000 == 0) {
+                log.info("update 개수 : {}", count.get());
+            }
         }
     }
 }

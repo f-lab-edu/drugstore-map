@@ -33,7 +33,7 @@ public class FacilityDetailInfoApi {
         this.keyProperties = keyProperties;
         this.urlProperties = urlProperties;
         this.objectMapper = new ObjectMapper();
-        this.executorService = Executors.newFixedThreadPool(10);
+        this.executorService = Executors.newFixedThreadPool(5);
         this.client = HttpClient.newBuilder().build();
     }
 
