@@ -15,11 +15,12 @@ public class HealthMapResponseDto {
     private String address;     //주소
     private String phoneNumber; //전화번호
     private String pageUrl; //병원 홈페이지
-    private String postNumber;  //우편번호
+
     private String type;    //종별코드명
     private String state;   //시도코드명
     private String city;    //시군구코드
     private String town;  //읍면동
+    private String postNumber;  //우편번호
     private double latitude;
     private double longitude;
     private String parking;
@@ -42,14 +43,14 @@ public class HealthMapResponseDto {
     private double distance;
 
     public static HealthMapResponseDto of(
-            String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String type,
-            String state, String city, String town, double latitude, double longitude, String parking, String parkingEtc, String treatmentMon,
-            String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun,
-            String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday,
-            String emergencyDay, String emergencyNight, double distance) {
+            String code, String name, String address, String phoneNumber, String pageUrl, String type, String state,
+            String city, String town, String postNumber, double latitude, double longitude, String parking, String parkingEtc,
+            String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
+            String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun,
+            String noTreatmentHoliday, String emergencyDay, String emergencyNight, double distance) {
         return new HealthMapResponseDto(
-                code, name, address, phoneNumber, pageUrl, postNumber, type, state, city,
-                town, latitude, longitude, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
+                code, name, address, phoneNumber, pageUrl, type, state, city,
+                town, postNumber, latitude, longitude, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
                 treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek, receiveSat,
                 lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday, emergencyDay, emergencyNight, distance
         );

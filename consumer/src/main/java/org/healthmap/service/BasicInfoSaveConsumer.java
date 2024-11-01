@@ -65,7 +65,9 @@ public class BasicInfoSaveConsumer {
             MedicalFacilityEntity saveEntity = convertDtoToEntity(basicInfoDto);
             medicalFacilityRepository.save(saveEntity);
             count.incrementAndGet();
-            log.info("save count : {}", count.get());
+            if(count.get() != 0 && count.get() % 500 == 0) {
+                log.info("save count : {}", count.get());
+            }
         }
     }
 

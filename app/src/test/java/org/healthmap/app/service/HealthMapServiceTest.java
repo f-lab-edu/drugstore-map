@@ -20,7 +20,7 @@ class HealthMapServiceTest {
     void test() {
         HealthMapRequestDto healthMapRequestDto = HealthMapRequestDto.of(37.4828517, 126.9963104);
         List<HealthMapResponseDto> nearByMedicalFacility = healthMapService.getNearByMedicalFacility(healthMapRequestDto);
-
+        System.out.println(nearByMedicalFacility.size());
         Assertions.assertThat(nearByMedicalFacility).isNotEmpty();
     }
 }

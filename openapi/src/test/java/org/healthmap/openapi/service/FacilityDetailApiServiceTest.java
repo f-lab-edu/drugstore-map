@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.concurrent.CompletableFuture;
-
 @SpringBootTest
 class FacilityDetailApiServiceTest {
     @Autowired
@@ -20,7 +18,7 @@ class FacilityDetailApiServiceTest {
     @Transactional
     public void saveFacilityDetail() {
         String id = null;
-        CompletableFuture<FacilityDetailUpdateDto> updateCountFuture = facilityDetailService.getFacilityDetailInfo(id);
+        FacilityDetailUpdateDto updateCountFuture = facilityDetailService.getFacilityDetailInfo(id);
         Assertions.assertThat(updateCountFuture).isNotNull();
     }
 

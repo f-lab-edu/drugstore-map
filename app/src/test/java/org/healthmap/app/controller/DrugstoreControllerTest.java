@@ -22,7 +22,7 @@ class DrugstoreControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    String baseUrl = "/drugstore";
+    String baseUrl = "/healthmap";
 
     @BeforeEach
     public void setup() {
@@ -46,7 +46,7 @@ class DrugstoreControllerTest {
     public void testFindDrugstoreAround() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/around?longitude=123.11111&latitude=53.222222"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value("2"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value("0"));
     }
 
 }

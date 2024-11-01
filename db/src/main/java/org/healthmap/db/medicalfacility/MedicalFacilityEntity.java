@@ -1,12 +1,8 @@
 package org.healthmap.db.medicalfacility;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ColumnResult;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityResult;
-import jakarta.persistence.FieldResult;
 import jakarta.persistence.Id;
-import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -18,45 +14,8 @@ import org.locationtech.jts.geom.Point;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@SqlResultSetMapping(
-        name = "MedicalFacilityMapping",
-        entities = @EntityResult(
-                entityClass = MedicalFacilityEntity.class,
-                fields = {
-                        @FieldResult(name = "id", column = "id"),
-                        @FieldResult(name = "name", column = "name"),
-                        @FieldResult(name = "address", column = "address"),
-                        @FieldResult(name = "phoneNumber", column = "phone_number"),
-                        @FieldResult(name = "url", column = "url"),
-                        @FieldResult(name = "type", column = "type"),
-                        @FieldResult(name = "state", column = "state"),
-                        @FieldResult(name = "city", column = "city"),
-                        @FieldResult(name = "town", column = "town"),
-                        @FieldResult(name = "postNumber", column = "post_number"),
-                        @FieldResult(name = "coordinate", column = "coordinate"),
-                        @FieldResult(name = "parking", column = "parking"),
-                        @FieldResult(name = "parkingEtc", column = "parking_etc"),
-                        @FieldResult(name = "treatmentMon", column = "treatment_mon"),
-                        @FieldResult(name = "treatmentTue", column = "treatment_tue"),
-                        @FieldResult(name = "treatmentWed", column = "treatment_wed"),
-                        @FieldResult(name = "treatmentThu", column = "treatment_thu"),
-                        @FieldResult(name = "treatmentFri", column = "treatment_fri"),
-                        @FieldResult(name = "treatmentSat", column = "treatment_sat"),
-                        @FieldResult(name = "treatmentSun", column = "treatment_sun"),
-                        @FieldResult(name = "receiveWeek", column = "receive_week"),
-                        @FieldResult(name = "receiveSat", column = "receive_sat"),
-                        @FieldResult(name = "lunchWeek", column = "lunch_week"),
-                        @FieldResult(name = "lunchSat", column = "lunch_sat"),
-                        @FieldResult(name = "noTreatmentSun", column = "no_treatment_sun"),
-                        @FieldResult(name = "noTreatmentHoliday", column = "no_treatment_holiday"),
-                        @FieldResult(name = "emergencyDay", column = "emergency_day"),
-                        @FieldResult(name = "emergencyNight", column = "emergency_night")
-                }
-        ),
-        columns = {@ColumnResult(name = "distance", type = Double.class)}
-)
 @Table(name = "medical_facility")
-public class MedicalFacilityEntity {
+public class MedicalFacilityEntity extends BaseEntity{
     @Id
     private String id;
 
@@ -66,7 +25,7 @@ public class MedicalFacilityEntity {
     @Column(nullable = false)
     private String address;
 
-    @Column(length = 30)
+    @Column(name = "phone_number", length = 30)
     private String phoneNumber;
 
     private String url;
@@ -83,27 +42,57 @@ public class MedicalFacilityEntity {
     @Column(length = 30)
     private String town;
 
-    @Column(length = 16)
+    @Column(name = "post_number", length = 16)
     private String postNumber;
 
     private Point coordinate;
 
     private String parking;
+    @Column(name = "parking_etc")
     private String parkingEtc;
+
+    @Column(name = "treatment_mon")
     private String treatmentMon;    // 진료시간_월
+
+    @Column(name = "treatment_tue")
     private String treatmentTue;
+
+    @Column(name = "treatment_wed")
     private String treatmentWed;
+
+    @Column(name = "treatment_thu")
     private String treatmentThu;
+
+    @Column(name = "treatment_fri")
     private String treatmentFri;
+
+    @Column(name = "treatment_sat")
     private String treatmentSat;
+
+    @Column(name = "treatment_sun")
     private String treatmentSun;
+
+    @Column(name = "receive_week")
     private String receiveWeek;     // 접수시간_평일
+
+    @Column(name = "receive_sat")
     private String receiveSat;      // 접수시간_토요일
+
+    @Column(name = "lunch_week")
     private String lunchWeek;       // 점심시간_평일
+
+    @Column(name = "lunch_sat")
     private String lunchSat;        // 점심시간_토
+
+    @Column(name = "no_treatment_sun")
     private String noTreatmentSun;      // 일요일 휴진
+
+    @Column(name = "no_treatment_holiday")
     private String noTreatmentHoliday;  // 공휴일 휴진
+
+    @Column(name = "emergency_day")
     private String emergencyDay;
+    @Column(name = "emergency_night")
     private String emergencyNight;
 
 
@@ -113,7 +102,8 @@ public class MedicalFacilityEntity {
                                            String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
                                            String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat,
                                            String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
-        return new MedicalFacilityEntity(id, name, address, phoneNumber, url, type, state, city, town,
+        return new MedicalFacilityEntity(
+                id, name, address, phoneNumber, url, type, state, city, town,
                 postNumber, coordinate, parking, parkingEtc, treatmentMon, treatmentTue,
                 treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                 receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun,

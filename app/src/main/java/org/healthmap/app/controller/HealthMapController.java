@@ -24,7 +24,7 @@ public class HealthMapController {
     }
 
     @GetMapping("/around")
-    public ResponseEntity<List<HealthMapResponseDto>> findDrugstoreAround(
+    public ResponseEntity<List<HealthMapResponseDto>> findFacilityAround(
             @ModelAttribute HealthMapRequestDto requestDto
     ) {
         List<HealthMapResponseDto> nearByMedicalFacility = healthMapService.getNearByMedicalFacility(requestDto);
