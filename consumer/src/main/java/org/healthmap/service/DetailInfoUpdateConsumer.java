@@ -2,23 +2,20 @@ package org.healthmap.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
+import org.healthmap.openapi.error.OpenApiErrorCode;
+import org.healthmap.openapi.exception.OpenApiProblemException;
 import org.healthmap.openapi.service.FacilityDetailApiService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -37,7 +34,7 @@ public class DetailInfoUpdateConsumer {
     public void updateDetailInfo(ConsumerRecord<String, BasicInfoDto> record, Acknowledgment ack) {
         String id = record.value().getCode();
         try {
-            FacilityDetailUpdateDto detailUpdateDto = facilityDetailApiService.getFacilityDetailInfo(id).join();
+            FacilityDetailUpdateDto detailUpdateDto = facilityDetailApiService.getFacilityDetailInfo(id);
             if (detailUpdateDto != null) {
                 Boolean transaction = transactionTemplate.execute(status -> {
                     try {
@@ -53,7 +50,7 @@ public class DetailInfoUpdateConsumer {
                         return false;
                     }
                 });
-                if(!transaction){
+                if (transaction != null && !transaction) {
                     ack.nack(Duration.ofMillis(500));
                     return;
                 }
@@ -61,6 +58,20 @@ public class DetailInfoUpdateConsumer {
             // 개수 확인용
             kafkaTemplate.send("check", String.valueOf(count.get()));
             ack.acknowledge();
+        } catch (OpenApiProblemException oe) {
+            if (oe.getOpenApiErrorCode() == OpenApiErrorCode.TOO_MANY_TRY) {
+                log.error("too many try : {}", oe.getMessage(), oe);
+                ack.nack(Duration.ofMillis(500));
+            } else {
+                int retryCount = getRetryCount(record) + 1;
+                if (retryCount < 5) {
+                    addRetryCount(record, retryCount);
+                    ack.nack(Duration.ofMillis(500));
+                } else {
+                    kafkaTemplate.send("error-check", "-"); // 차후 제거
+                    ack.acknowledge();
+                }
+            }
         } catch (Exception e) {
             log.error("update detail error : {}", e.getMessage(), e);
             ack.nack(Duration.ofMillis(500));

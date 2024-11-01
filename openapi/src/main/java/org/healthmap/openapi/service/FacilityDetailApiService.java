@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,19 +33,20 @@ public class FacilityDetailApiService {
     // 1. API로부터 JsonDTO 가져오기
     // 2. jsonDTO를 updateDTO로 변환
     // 3. repository에 update 진행
-    public CompletableFuture<FacilityDetailUpdateDto> getFacilityDetailInfo(String id) {
-        return facilityDetailInfoApi.getFacilityDetailDtoFromApi(id)
-                .thenApplyAsync(facilityDetailDto -> {
-                    if(facilityDetailDto != null) {
-                        return convertToUpdateDto(facilityDetailDto);
-                    } else {
-                        return null;
-                    }
-                }, executorService)
-                .exceptionally(ex -> {
-                    log.error("진행중에 오류가 발생했습니다. : {}", ex.getMessage());
-                    throw new RuntimeException(ex);
-                });
+    public FacilityDetailUpdateDto getFacilityDetailInfo(String id) {
+        FacilityDetailDto facilityDetailDto = facilityDetailInfoApi.getFacilityDetailDtoFromApi(id);
+
+        if (facilityDetailDto != null) {
+            try {
+                FacilityDetailUpdateDto updateDto = convertToUpdateDto(facilityDetailDto);
+                return updateDto;
+            } catch(Exception e){
+                log.error("진행중에 오류가 발생했습니다. : {}", e.getMessage());
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
     }
 
 
