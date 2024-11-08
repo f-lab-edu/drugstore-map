@@ -1,7 +1,7 @@
 package org.healthmap.openapi.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
 import org.healthmap.openapi.api.FacilityDetailInfoApi;
 import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Service
 @Slf4j
@@ -20,13 +18,11 @@ public class FacilityDetailApiService {
     private final FacilityDetailInfoApi facilityDetailInfoApi;
     private final MedicalFacilityRepository medicalFacilityRepository;
     private final PatternMatcherManager patternMatcherManager;
-    private final ExecutorService executorService;
 
     public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager) {
         this.facilityDetailInfoApi = facilityDetailInfoApi;
         this.medicalFacilityRepository = medicalFacilityRepository;
         this.patternMatcherManager = patternMatcherManager;
-        this.executorService = Executors.newFixedThreadPool(50);
     }
 
 
@@ -40,7 +36,7 @@ public class FacilityDetailApiService {
             try {
                 FacilityDetailUpdateDto updateDto = convertToUpdateDto(facilityDetailDto);
                 return updateDto;
-            } catch(Exception e){
+            } catch (Exception e) {
                 log.error("진행중에 오류가 발생했습니다. : {}", e.getMessage());
                 throw new RuntimeException(e);
             }

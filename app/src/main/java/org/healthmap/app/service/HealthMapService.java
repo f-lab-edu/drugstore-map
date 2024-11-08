@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.Point;
 import org.healthmap.app.dto.HealthMapRequestDto;
 import org.healthmap.app.dto.HealthMapResponseDto;
-import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

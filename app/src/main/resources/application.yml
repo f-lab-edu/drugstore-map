@@ -6,3 +6,12 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: root
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27018
+      database: test
+      username: root
+      password: root1234!!
+      authentication-database: admin

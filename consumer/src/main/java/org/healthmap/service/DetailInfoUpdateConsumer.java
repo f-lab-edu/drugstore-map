@@ -3,7 +3,7 @@ package org.healthmap.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;

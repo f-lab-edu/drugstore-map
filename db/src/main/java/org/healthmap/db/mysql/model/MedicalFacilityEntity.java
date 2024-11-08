@@ -1,4 +1,4 @@
-package org.healthmap.db.medicalfacility;
+package org.healthmap.db.mysql.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
