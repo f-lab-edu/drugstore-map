@@ -2,7 +2,7 @@ package org.healthmap.openapi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityMysqlRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.api.MedicalFacilityApi;
 import org.healthmap.openapi.config.UrlProperties;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MedicalFacilityApiService {
     private final UrlProperties urlProperties;
-    private final MedicalFacilityRepository medicalFacilityRepository;
+    private final MedicalFacilityMysqlRepository medicalFacilityRepository;
     private final MedicalFacilityApi medicalFacilityApi;
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 

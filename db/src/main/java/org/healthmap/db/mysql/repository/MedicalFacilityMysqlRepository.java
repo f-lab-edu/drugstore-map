@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MedicalFacilityRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
+public interface MedicalFacilityMysqlRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
 
     List<MedicalFacilityEntity> findByCoordinateIsNull();
 

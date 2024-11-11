@@ -6,7 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.healthmap.config.KafkaProperties;
 import org.healthmap.db.mysql.model.MedicalFacilityEntity;
-import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityMysqlRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.service.MapApiService;
 import org.locationtech.jts.geom.Coordinate;
@@ -25,12 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BasicInfoSaveConsumer {
     private final KafkaTemplate<String, BasicInfoDto> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
-    private final MedicalFacilityRepository medicalFacilityRepository;
+    private final MedicalFacilityMysqlRepository medicalFacilityRepository;
     private final MapApiService mapApiService;
     private final Point dummyPoint;
     private final AtomicInteger count = new AtomicInteger(0); // 동작 확인용
 
-    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityRepository medicalFacilityRepository, MapApiService mapApiService) {
+    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityMysqlRepository medicalFacilityRepository, MapApiService mapApiService) {
         this.kafkaTemplate = kafkaTemplate;
         this.kafkaProperties = kafkaProperties;
         this.medicalFacilityRepository = medicalFacilityRepository;

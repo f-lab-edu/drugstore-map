@@ -3,7 +3,8 @@ package org.healthmap.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.healthmap.db.mysql.repository.MedicalFacilityRepository;
+import org.healthmap.db.mysql.model.MedicalFacilityEntity;
+import org.healthmap.db.mysql.repository.MedicalFacilityMysqlRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
 import org.healthmap.openapi.error.OpenApiErrorCode;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DetailInfoUpdateConsumer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final TransactionTemplate transactionTemplate;
-    private final MedicalFacilityRepository medicalFacilityRepository;
+    private final MedicalFacilityMysqlRepository medicalFacilityRepository;
     private final FacilityDetailApiService facilityDetailApiService;
     private final AtomicInteger count = new AtomicInteger(0);     // 동작 확인용
 
@@ -35,28 +36,32 @@ public class DetailInfoUpdateConsumer {
         String id = record.value().getCode();
         try {
             FacilityDetailUpdateDto detailUpdateDto = facilityDetailApiService.getFacilityDetailInfo(id);
-            if (detailUpdateDto != null) {
-                Boolean transaction = transactionTemplate.execute(status -> {
-                    try {
-                        updateFacilityDetail(detailUpdateDto);
-                        count.incrementAndGet();
-                        if (count.get() != 0 && count.get() % 100 == 0) {
-                            log.info("updated detail count : {}", count.get());
-                        }
-                        return true;
-                    } catch (Exception e) {
-                        log.error("update detail error : {}", e.getMessage(), e);
-                        status.setRollbackOnly();
-                        return false;
-                    }
-                });
-                if (transaction != null && !transaction) {
-                    ack.nack(Duration.ofMillis(500));
-                    return;
-                }
+            MedicalFacilityEntity basicInfoEntity = medicalFacilityRepository.findById(id).orElse(null);
+            if (detailUpdateDto != null && basicInfoEntity != null) {
+                addBasicInfoToUpdateDto(detailUpdateDto, basicInfoEntity);
+//                Boolean transaction = transactionTemplate.execute(status -> {
+//                    try {
+//                        updateFacilityDetail(detailUpdateDto);
+//                        return true;
+//                    } catch (Exception e) {
+//                        log.error("update detail error : {}", e.getMessage(), e);
+//                        status.setRollbackOnly();
+//                        return false;
+//                    }
+//                });
+//                if (transaction != null && !transaction) {
+//                    ack.nack(Duration.ofMillis(500));
+//                    return;
+//                }
             }
+
             // 개수 확인용
             kafkaTemplate.send("check", String.valueOf(count.get()));
+
+            count.incrementAndGet();
+            if (count.get() != 0 && count.get() % 100 == 0) {
+                log.info("updated detail count : {}", count.get());
+            }
             ack.acknowledge();
         } catch (OpenApiProblemException oe) {
             if (oe.getOpenApiErrorCode() == OpenApiErrorCode.TOO_MANY_TRY) {
@@ -76,6 +81,15 @@ public class DetailInfoUpdateConsumer {
             log.error("update detail error : {}", e.getMessage(), e);
             ack.nack(Duration.ofMillis(500));
         }
+    }
+
+    // 기본정보 저장
+    private static void addBasicInfoToUpdateDto(FacilityDetailUpdateDto detailUpdateDto, MedicalFacilityEntity entity) {
+        detailUpdateDto.addBasicInfo(entity.getName(), entity.getAddress(),
+                entity.getPhoneNumber(), entity.getUrl(), entity.getType(),
+                entity.getState(), entity.getCity(), entity.getTown(),
+                entity.getPostNumber(), entity.getCoordinate(), entity.getCreatedAt(),
+                entity.getUpdatedAt());
     }
 
     //TODO: 사용할지 말지 결정
