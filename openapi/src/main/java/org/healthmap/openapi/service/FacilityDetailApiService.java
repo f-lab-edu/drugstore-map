@@ -61,11 +61,10 @@ public class FacilityDetailApiService {
         String lunchWeek = changeLunchTime(dto.getLunchWeek());
         String lunchSat = changeLunchTime(dto.getLunchSat());
 
-        return FacilityDetailUpdateDto.of(dto.getCode(), null, null, null, null,
-                null, null, null, null, null, null, dto.getParkXpnsYn(),
+        return FacilityDetailUpdateDto.of(dto.getCode(),  dto.getParkXpnsYn(),
                 dto.getParkEtc(), treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat,
                 treatmentSun, receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday,
-                dto.getEmyDayYn(), dto.getEmyNgtYn(), null, null);
+                dto.getEmyDayYn(), dto.getEmyNgtYn());
     }
 
     private String getSundayTreatment(String noTreatmentSun, String treatmentStart, String treatmentEnd) {

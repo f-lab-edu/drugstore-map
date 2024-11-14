@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.locationtech.jts.geom.Point;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -14,17 +11,6 @@ import java.time.LocalDateTime;
 @ToString   // 차후 필요없게될 시 삭제
 public class FacilityDetailUpdateDto {
     private String code;            // ykiho(암호 요양 기호)
-    private String name;
-    private String address;
-    private String phoneNumber;
-    private String url;
-    private String type;
-    private String state;
-    private String city;
-    private String town;
-    private String postNumber;
-    private Point coordinate;
-
     private String parking;
     private String parkingEtc;
     private String treatmentMon;    // 진료시간_월
@@ -42,26 +28,14 @@ public class FacilityDetailUpdateDto {
     private String noTreatmentHoliday;  // 공휴일 휴진
     private String emergencyDay;
     private String emergencyNight;
-    private LocalDateTime createdAt;
 
-    public FacilityDetailUpdateDto(String code, String name, String address, String phoneNumber, String url, String type,
-                                   String state, String city, String town, String postNumber, Point coordinate, String parking,
-                                   String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
-                                   String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun,
-                                   String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun,
-                                   String noTreatmentHoliday, String emergencyDay, String emergencyNight,
-                                   LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public FacilityDetailUpdateDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue,
+                                   String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
+                                   String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat,
+                                   String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight
+    ) {
         this.code = code;
-        this.name = name;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.url = url;
-        this.type = type;
-        this.state = state;
-        this.city = city;
-        this.town = town;
-        this.postNumber = postNumber;
-        this.coordinate = coordinate;
+
         this.parking = parking;
         this.parkingEtc = parkingEtc;
         this.treatmentMon = treatmentMon;
@@ -79,44 +53,19 @@ public class FacilityDetailUpdateDto {
         this.noTreatmentHoliday = noTreatmentHoliday;
         this.emergencyDay = emergencyDay;
         this.emergencyNight = emergencyNight;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
-    private LocalDateTime updatedAt;
-
-
-    public void addBasicInfo(String name, String address, String phoneNumber, String url,
-                             String type, String state, String city, String town, String postNumber,
-                             Point coordinate, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.name = name;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.url = url;
-        this.type = type;
-        this.state = state;
-        this.city = city;
-        this.town = town;
-        this.postNumber = postNumber;
-        this.coordinate = coordinate;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
 
     public static FacilityDetailUpdateDto of(
-            String code, String name, String address, String phoneNumber, String url, String type, String state,
-            String city, String town, String postNumber, Point coordinate, String parking, String parkingEtc,
-            String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri,
-            String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek,
-            String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight,
-            LocalDateTime createdAt, LocalDateTime updatedAt
+            String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
+            String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat,
+            String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight
     ) {
         return new FacilityDetailUpdateDto(
-                code, name, address, phoneNumber, url, type, state, city, town,
-                postNumber, coordinate, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
+                code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
                 treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek,
                 receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday,
-                emergencyDay, emergencyNight, createdAt, updatedAt
+                emergencyDay, emergencyNight
         );
     }
 

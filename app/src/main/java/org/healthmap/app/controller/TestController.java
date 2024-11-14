@@ -16,14 +16,14 @@ public class TestController {
     private final MedicalFacilityMysqlRepository medicalFacilityMysqlRepository;
 
     @GetMapping("/mongo/test2")
-    public void contentTest2(){
+    public void contentTest2() {
         MedicalFacilityEntity testEntity = medicalFacilityMysqlRepository.findById("JDQ4MTAxMiM1MSMkMiMkMCMkMDAkMzgxMTkxIzExIyQxIyQ3IyQ5MiQzNjEwMDIjNTEjJDEjJDIjJDgz").orElse(null);
         MedicalFacility medicalFacility = MedicalFacility.of(testEntity.getId(), testEntity.getName(), testEntity.getAddress(), testEntity.getPhoneNumber(), testEntity.getUrl(),
                 testEntity.getType(), testEntity.getState(), testEntity.getCity(), testEntity.getTown(), testEntity.getPostNumber(), testEntity.getCoordinate(),
                 testEntity.getParking(), testEntity.getParkingEtc(), testEntity.getTreatmentMon(), testEntity.getTreatmentTue(), testEntity.getTreatmentWed(),
                 testEntity.getTreatmentThu(), testEntity.getTreatmentFri(), testEntity.getTreatmentSat(), testEntity.getTreatmentSun(), testEntity.getReceiveWeek(),
                 testEntity.getReceiveSat(), testEntity.getLunchWeek(), testEntity.getLunchSat(), testEntity.getNoTreatmentSun(), testEntity.getNoTreatmentHoliday(),
-                testEntity.getEmergencyDay(), testEntity.getEmergencyNight(),testEntity.getCreatedAt(), testEntity.getUpdatedAt());
+                testEntity.getEmergencyDay(), testEntity.getEmergencyNight(), testEntity.getCreatedAt(), testEntity.getUpdatedAt());
         medicalFacilityMongoRepository.save(medicalFacility);
     }
 }

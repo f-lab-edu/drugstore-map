@@ -11,3 +11,9 @@ spring:
   kafka:
     bootstrap-servers: localhost:9093
 
+  data:
+    mongodb:
+      host: localhost
+      port: 27018
+      database: healthmap
+      auto-index-creation: true
