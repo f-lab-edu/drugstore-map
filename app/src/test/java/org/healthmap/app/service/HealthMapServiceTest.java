@@ -18,7 +18,7 @@ class HealthMapServiceTest {
     @Test
     @DisplayName("좌표 근처의 병원, 약국을 가져온다")
     void test() {
-        HealthMapRequestDto healthMapRequestDto = HealthMapRequestDto.of(37.4828517, 126.9963104);
+        HealthMapRequestDto healthMapRequestDto = HealthMapRequestDto.of( 126.9963104,37.4828517);
         List<HealthMapResponseDto> nearByMedicalFacility = healthMapService.getNearByMedicalFacility(healthMapRequestDto);
         System.out.println(nearByMedicalFacility.size());
         Assertions.assertThat(nearByMedicalFacility).isNotEmpty();
