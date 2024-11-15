@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.geolatte.geom.Point;
 import org.healthmap.app.dto.HealthMapRequestDto;
 import org.healthmap.app.dto.HealthMapResponseDto;
-import org.healthmap.db.medicalfacility.MedicalFacilityRepository;
+import org.healthmap.db.mysql.repository.MedicalFacilityMysqlRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class HealthMapService {
-    private final MedicalFacilityRepository medicalFacilityRepository;
+    private final MedicalFacilityMysqlRepository medicalFacilityRepository;
 
     // 2km 이내의 시설 찾기
     public List<HealthMapResponseDto> getNearByMedicalFacility(HealthMapRequestDto requestDto) {

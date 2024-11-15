@@ -10,7 +10,7 @@ public class TaskExecutorConfig {
     @Bean
     public AsyncTaskExecutor executor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(25);
+        executor.setCorePoolSize(20);
         executor.setMaxPoolSize(30);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("KafkaExecutor-");
@@ -20,8 +20,8 @@ public class TaskExecutorConfig {
     @Bean
     public AsyncTaskExecutor saveExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(15);
+        executor.setCorePoolSize(15);
+        executor.setMaxPoolSize(25);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("KafkaExecutorForSave-");
         executor.initialize();

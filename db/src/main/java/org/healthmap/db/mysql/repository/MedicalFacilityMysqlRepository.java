@@ -1,6 +1,7 @@
-package org.healthmap.db.medicalfacility;
+package org.healthmap.db.mysql.repository;
 
 import jakarta.transaction.Transactional;
+import org.healthmap.db.mysql.model.MedicalFacilityEntity;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MedicalFacilityRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
+public interface MedicalFacilityMysqlRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
 
     List<MedicalFacilityEntity> findByCoordinateIsNull();
 

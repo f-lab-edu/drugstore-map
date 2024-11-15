@@ -29,9 +29,13 @@ public class FacilityDetailUpdateDto {
     private String emergencyDay;
     private String emergencyNight;
 
-
-    private FacilityDetailUpdateDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
+    public FacilityDetailUpdateDto(String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue,
+                                   String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
+                                   String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat,
+                                   String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight
+    ) {
         this.code = code;
+
         this.parking = parking;
         this.parkingEtc = parkingEtc;
         this.treatmentMon = treatmentMon;
@@ -51,16 +55,16 @@ public class FacilityDetailUpdateDto {
         this.emergencyNight = emergencyNight;
     }
 
+
     public static FacilityDetailUpdateDto of(
             String code, String parking, String parkingEtc, String treatmentMon, String treatmentTue, String treatmentWed,
-            String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek,
-            String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday,
-            String emergencyDay, String emergencyNight
+            String treatmentThu, String treatmentFri, String treatmentSat, String treatmentSun, String receiveWeek, String receiveSat,
+            String lunchWeek, String lunchSat, String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight
     ) {
         return new FacilityDetailUpdateDto(
                 code, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,
                 treatmentThu, treatmentFri, treatmentSat, treatmentSun, receiveWeek,
-                receiveSat, lunchWeek, lunchSat, noTreatmentSun,noTreatmentHoliday,
+                receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday,
                 emergencyDay, emergencyNight
         );
     }

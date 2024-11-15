@@ -1,4 +1,4 @@
-package org.healthmap.db.medicalfacility;
+package org.healthmap.db.mysql.repository;
 
 import java.util.List;
 

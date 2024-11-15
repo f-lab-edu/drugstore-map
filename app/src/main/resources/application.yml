@@ -6,3 +6,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:13306/healthmap?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: root
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27018
+      database: healthmap
+      auto-index-creation: true
+
