@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -63,7 +62,7 @@ public class MedicalFacilityApi {
                 .build();
 
         return CompletableFuture.supplyAsync(() -> {
-                    List<MedicalFacilityXmlDto> hospitalDtoList = new ArrayList<>();
+//                    List<MedicalFacilityXmlDto> hospitalDtoList = new ArrayList<>();
                     try {
                         return client.send(request, HttpResponse.BodyHandlers.ofString());
                     } catch (IOException | InterruptedException e) {
@@ -111,7 +110,6 @@ public class MedicalFacilityApi {
     //데이터 전체 개수를 반환하는 메서드
     private int getTotalCount(String url) {
         String realUrl = url + serviceKey;
-        log.info("url: {}", url);
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();

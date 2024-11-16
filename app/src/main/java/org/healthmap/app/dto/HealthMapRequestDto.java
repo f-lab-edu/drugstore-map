@@ -10,8 +10,9 @@ import lombok.Setter;
 public class HealthMapRequestDto {
     private double x;   // longitude
     private double y;   // latitude
+    private double distance;
 
-    public static HealthMapRequestDto of(double x, double y) {
-        return new HealthMapRequestDto(x, y);
+    public static HealthMapRequestDto of(double x, double y, double distance) {
+        return new HealthMapRequestDto(x, y, distance);
     }
 }
