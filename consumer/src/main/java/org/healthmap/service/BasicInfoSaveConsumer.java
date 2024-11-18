@@ -51,7 +51,7 @@ public class BasicInfoSaveConsumer {
         try {
             MedicalFacility findDocument = medicalFacilityMongoRepository.findById(dto.getCode()).orElse(null);
             saveMedicalFacilityMongo(dto, findDocument);
-//            kafkaTemplate.send(kafkaProperties.getDetailTopic(), dto);      //detail-info
+            kafkaTemplate.send(kafkaProperties.getDetailTopic(), dto);      //detail-info
             ack.acknowledge();
         } catch (Exception e) {
             log.error("Save new medical facility error: {}", e.getMessage(), e);
