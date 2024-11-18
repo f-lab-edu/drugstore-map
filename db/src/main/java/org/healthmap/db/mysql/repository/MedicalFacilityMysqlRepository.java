@@ -12,9 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MedicalFacilityMysqlRepository extends JpaRepository<MedicalFacilityEntity, String>, CustomMedicalFacilityRepository {
-
-    List<MedicalFacilityEntity> findByCoordinateIsNull();
+public interface MedicalFacilityMysqlRepository extends JpaRepository<MedicalFacilityEntity, String> {
 
     @Query("SELECT m.id FROM MedicalFacilityEntity m")
     List<String> findAllId();
@@ -68,10 +66,4 @@ public interface MedicalFacilityMysqlRepository extends JpaRepository<MedicalFac
             @Param("url") String url, @Param("type") String type, @Param("state") String state, @Param("city") String city,
             @Param("town") String town, @Param("postNumber") String postNumber, @Param("coordinate") Point coordinate
     );
-
-    @Modifying
-    @Query("UPDATE MedicalFacilityEntity m SET " +
-            "m.coordinate = :coordinate " +
-            "WHERE m.id = :id")
-    void updateNullCoordinate(@Param("coordinate") Point coordinate, @Param("id") String id);
 }
