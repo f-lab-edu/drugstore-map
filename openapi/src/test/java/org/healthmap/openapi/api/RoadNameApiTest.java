@@ -1,5 +1,7 @@
 package org.healthmap.openapi.api;
 
+import org.assertj.core.api.Assertions;
+import org.healthmap.openapi.TestConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -10,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.ArrayList;
 import java.util.List;
 
-@SpringBootTest
+@SpringBootTest(classes = TestConfig.class)
 class RoadNameApiTest {
     @Autowired
     private RoadNameApi roadNameApi;
@@ -20,6 +22,7 @@ class RoadNameApiTest {
     void getCoordinateFromMapApi() {
         Logger logger = LoggerFactory.getLogger(MapApiTest.class);
         List<String> testAddress = new ArrayList<>();
+        List<String> nullAddress = new ArrayList<>();
         testAddress.add("서울특별시 노원구 공릉로43길 1, 104호 (공릉동)");
         testAddress.add("전라남도 목포시 양을로 151, (산정동)");
         testAddress.add("강원특별자치도 양구군 방산면 성곡로 1788-24503, (금악보건소)");
@@ -30,25 +33,30 @@ class RoadNameApiTest {
         testAddress.add("경기도 화성시 동탄대로 469-12, 2층 2002호 (오산동, 동탄역 린스트라우스)");
 
         for (String str : testAddress) {
-            System.out.println("-----------------------------------");
-
             str = str.split(",")[0];
             String roadAddress = roadNameApi.getNewAddressFromApi(str);
-            if(roadAddress == null) {
+            if (roadAddress == null) {
                 str = str.split("-")[0];
                 roadAddress = roadNameApi.getNewAddressFromApi(str);
             } else {
                 logger.info("first " + roadAddress);
                 continue;
             }
-            if(roadAddress == null){
+            if (roadAddress == null) {
                 String[] tempStr = str.split(" ");
-                str = str.replace(tempStr[tempStr.length-1], "");
-                logger.info("no roadAddress : " + str);
+                str = str.replace(tempStr[tempStr.length - 1], "");
+                roadAddress = roadNameApi.getNewAddressFromApi(str);
+                logger.info("no roadAddress : " + roadAddress);
             } else {
                 logger.info("second " + roadAddress);
+                continue;
+            }
+
+            if (roadAddress == null) {
+                nullAddress.add(str);
             }
         }
 
+        Assertions.assertThat(nullAddress.size()).isEqualTo(0);
     }
 }

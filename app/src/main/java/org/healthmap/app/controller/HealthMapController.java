@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.healthmap.app.dto.HealthMapRequestDto;
 import org.healthmap.app.dto.HealthMapResponseDto;
 import org.healthmap.app.service.HealthMapService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -18,17 +19,17 @@ import java.util.List;
 public class HealthMapController {
     private final HealthMapService healthMapService;
 
-    @GetMapping
-    public HealthMapRequestDto findAllDrugstore() {
-        return null;
+    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<HealthMapResponseDto>> findAllFacility() {
+        List<HealthMapResponseDto> allMedicalFacility = healthMapService.getAllMedicalFacility();
+        return ResponseEntity.ok(allMedicalFacility);
     }
 
-    @GetMapping("/around")
+    @GetMapping(value = "/around", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<HealthMapResponseDto>> findFacilityAround(
             @ModelAttribute HealthMapRequestDto requestDto
     ) {
-        List<HealthMapResponseDto> nearByMedicalFacility = healthMapService.getNearByMedicalFacilityMongo(requestDto);
-
+        List<HealthMapResponseDto> nearByMedicalFacility = healthMapService.getNearByMedicalFacility(requestDto);
         return ResponseEntity.ok(nearByMedicalFacility);
     }
 

@@ -29,9 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DetailInfoUpdateConsumer {
     private final KafkaTemplate<String, FacilityIdDto> kafkaTemplate;
     private final FacilityDetailApiService facilityDetailApiService;
-    private final AtomicInteger detailUpdateCount = new AtomicInteger(0);     // 동작 확인용
     private final MongoTemplate mongoTemplate;
+    private final AtomicInteger detailUpdateCount = new AtomicInteger(0);     // 동작 확인용
 
+    // 세부 정보 저장 (DB 데이터 갱신)
     @KafkaListener(topics = "${kafka-config.consumer.detail-topic}",
             groupId = "${kafka-config.consumer.detail-groupId}",
             containerFactory = "saveBasicInfoContainerFactory")
@@ -40,10 +41,10 @@ public class DetailInfoUpdateConsumer {
         try {
             FacilityDetailUpdateDto detailUpdateDto = facilityDetailApiService.getFacilityDetailInfo(id);
             if (detailUpdateDto != null) {
-                updateFacilityDetailMongo(detailUpdateDto);
+                updateFacilityDetail(detailUpdateDto);
                 detailUpdateCount.incrementAndGet();
                 if (detailUpdateCount.get() != 0 && detailUpdateCount.get() % 100 == 0) {
-                    log.info("updated detail count : {}", detailUpdateCount.get());
+                    log.info("Detail info update count : {}", detailUpdateCount.get());
                 }
             }
             kafkaTemplate.send("finished", new FacilityIdDto(id));
@@ -78,7 +79,7 @@ public class DetailInfoUpdateConsumer {
         record.headers().add("retry-count", Integer.toString(count).getBytes());
     }
 
-    private void updateFacilityDetailMongo(FacilityDetailUpdateDto dto) {
+    private void updateFacilityDetail(FacilityDetailUpdateDto dto) {
         Query query = Query.query(Criteria.where("_id").is(dto.getCode()));
         Update update = new Update();
         if (dto.getParking() != null) update.set("parking", dto.getParking());

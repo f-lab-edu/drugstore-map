@@ -31,16 +31,17 @@ public class BasicInfoUpdateConsumer {
     private final AtomicInteger notFoundCount = new AtomicInteger(0);   // 동작 확인용
     private final AtomicInteger realCount = new AtomicInteger(0);       // 동작 확인용
 
+    // 기본 정보 갱신
     @KafkaListener(topics = "${kafka-config.consumer.basic-topic}",
             groupId = "${kafka-config.consumer.groupId}",
             containerFactory = "basicInfoKafkaListenerContainerFactory")
     public void updateBasicInfo(BasicInfoDto dto) {
         CompletableFuture.supplyAsync(() -> {
                     try {
-                        updateMedicalFacilityMongo(dto);
+                        updateMedicalFacility(dto);
                         realCount.incrementAndGet();
                         if (realCount.get() % 5000 == 0) {
-                            log.info("updated count : {}", realCount.get());
+                            log.info("Basic info updated count : {}", realCount.get());
                         }
                     } catch (Exception e) {
                         log.error("Updating medical facility error: {}", e.getMessage(), e);
@@ -55,7 +56,7 @@ public class BasicInfoUpdateConsumer {
                 });
     }
 
-    private void updateMedicalFacilityMongo(BasicInfoDto dto) {
+    private void updateMedicalFacility(BasicInfoDto dto) {
         Query query = Query.query(Criteria.where("_id").is(dto.getCode()));
         Update update = new Update();
         if (dto.getName() != null) {
@@ -83,7 +84,6 @@ public class BasicInfoUpdateConsumer {
             update.set("postNumber", dto.getPostNumber());
         }
         if (dto.getCoordinate() != null) {
-            // 나중에 GeoJsonPoint로 변경
             GeoJsonPoint geoJsonPoint = new GeoJsonPoint(dto.getCoordinate().getX(), dto.getCoordinate().getY());
             update.set("coordinate", geoJsonPoint);
         }

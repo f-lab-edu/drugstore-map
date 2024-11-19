@@ -24,9 +24,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation 'org.hibernate:hibernate-spatial:6.6.0.Final'
 
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter

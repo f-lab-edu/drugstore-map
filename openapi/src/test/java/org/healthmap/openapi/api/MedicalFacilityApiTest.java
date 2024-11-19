@@ -1,8 +1,7 @@
 package org.healthmap.openapi.api;
 
 import org.assertj.core.api.Assertions;
-import org.healthmap.openapi.config.KeyProperties;
-import org.healthmap.openapi.config.PropertiesConfig;
+import org.healthmap.openapi.TestConfig;
 import org.healthmap.openapi.config.UrlProperties;
 import org.healthmap.openapi.dto.MedicalFacilityXmlDto;
 import org.junit.jupiter.api.DisplayName;
@@ -11,14 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-@WebMvcTest({MedicalFacilityApi.class, KeyProperties.class, UrlProperties.class, PropertiesConfig.class})
+@SpringBootTest(classes = TestConfig.class)
 class MedicalFacilityApiTest {
     @Autowired
-    private MedicalFacilityApi hospitalApi;
+    private MedicalFacilityApi medicalFacilityApi;
     @Autowired
     private UrlProperties urlProperties;
 
@@ -30,7 +29,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("데이터 가져오는지 확인")
         public void getHospitalDtoList() {
-            List<MedicalFacilityXmlDto> hospitalDtoList = hospitalApi.getMedicalFacilityInfoList(urlProperties.getHospitalUrl(), 1).join();
+            List<MedicalFacilityXmlDto> hospitalDtoList = medicalFacilityApi.getMedicalFacilityInfoList(urlProperties.getHospitalUrl(), 1).join();
             log.info("list size : {}", hospitalDtoList.size());
 
             // then
@@ -41,7 +40,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("페이지 개수를 가져오는지 확인")
         public void getHospitalPageSize() {
-            int pageSize = hospitalApi.getPageSize(urlProperties.getHospitalUrl());
+            int pageSize = medicalFacilityApi.getPageSize(urlProperties.getHospitalUrl());
             log.info("pageSize : {}", pageSize);
 
             Assertions.assertThat(pageSize).isNotZero();
@@ -54,7 +53,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("DrugstoreUrl으로부터 데이터 가져오는지 확인")
         public void getDrugstoreDtoList() {
-            List<MedicalFacilityXmlDto> drugstoreDtoList = hospitalApi.getMedicalFacilityInfoList(urlProperties.getDrugstoreUrl(), 1).join();
+            List<MedicalFacilityXmlDto> drugstoreDtoList = medicalFacilityApi.getMedicalFacilityInfoList(urlProperties.getDrugstoreUrl(), 1).join();
             log.info("list size : {}", drugstoreDtoList.size());
 
             // then
@@ -65,7 +64,7 @@ class MedicalFacilityApiTest {
         @Test
         @DisplayName("페이지 개수를 가져오는지 확인")
         public void getDrugstorePageSize() {
-            int pageSize = hospitalApi.getPageSize(urlProperties.getDrugstoreUrl());
+            int pageSize = medicalFacilityApi.getPageSize(urlProperties.getDrugstoreUrl());
             log.info("pageSize : {}", pageSize);
 
             Assertions.assertThat(pageSize).isNotZero();
