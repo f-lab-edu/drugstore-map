@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.healthmap.dto.serializer.PointDeserializer;
-import org.healthmap.dto.serializer.PointSerializer;
-import org.locationtech.jts.geom.Point;
+import org.healthmap.dto.serializer.GeoJsonPointDeserializer;
+import org.healthmap.dto.serializer.GeoJsonPointSerializer;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 @NoArgsConstructor
 @Getter
@@ -22,11 +22,11 @@ public class BasicInfoDto {
     private String city;        //시군구코드
     private String town;        //읍면동
 
-    @JsonSerialize(using = PointSerializer.class)
-    @JsonDeserialize(using = PointDeserializer.class)
-    private Point coordinate;   //좌표
+    @JsonSerialize(using = GeoJsonPointSerializer.class)
+    @JsonDeserialize(using = GeoJsonPointDeserializer.class)
+    private GeoJsonPoint coordinate;
 
-    public BasicInfoDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, Point coordinate) {
+    public BasicInfoDto(String code, String name, String address, String phoneNumber, String pageUrl, String postNumber, String typeName, String stateName, String cityName, String emdongName, GeoJsonPoint coordinate) {
         this.code = code;
         this.name = name;
         this.address = address;
@@ -40,7 +40,7 @@ public class BasicInfoDto {
         this.coordinate = coordinate;
     }
 
-    public void changeCoordinate(Point point) {
+    public void changeCoordinate(GeoJsonPoint point) {
         this.coordinate = point;
     }
 }

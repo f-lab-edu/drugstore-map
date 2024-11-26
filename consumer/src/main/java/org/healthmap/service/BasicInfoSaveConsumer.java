@@ -6,12 +6,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.healthmap.config.KafkaProperties;
 import org.healthmap.db.mongodb.model.MedicalFacility;
-import org.healthmap.db.mongodb.repository.MedicalFacilityMongoRepository;
+import org.healthmap.db.mongodb.repository.MedicalFacilityRepository;
 import org.healthmap.dto.BasicInfoDto;
 import org.healthmap.openapi.service.MapApiService;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
@@ -25,21 +23,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BasicInfoSaveConsumer {
     private final KafkaTemplate<String, BasicInfoDto> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
-    private final MedicalFacilityMongoRepository medicalFacilityMongoRepository;
+    private final MedicalFacilityRepository medicalFacilityRepository;
     private final MapApiService mapApiService;
-    private final Point dummyPoint;
     private final AtomicInteger count = new AtomicInteger(0); // 동작 확인용
 
-    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityMongoRepository medicalFacilityMongoRepository, MapApiService mapApiService) {
+    public BasicInfoSaveConsumer(KafkaTemplate<String, BasicInfoDto> kafkaTemplate, KafkaProperties kafkaProperties, MedicalFacilityRepository medicalFacilityMongoRepository, MapApiService mapApiService) {
         this.kafkaTemplate = kafkaTemplate;
         this.kafkaProperties = kafkaProperties;
-        this.medicalFacilityMongoRepository = medicalFacilityMongoRepository;
+        this.medicalFacilityRepository = medicalFacilityMongoRepository;
         this.mapApiService = mapApiService;
-        GeometryFactory geometryFactory = new GeometryFactory();
-        this.dummyPoint = geometryFactory.createPoint(new Coordinate(0, 0));
-        this.dummyPoint.setSRID(4326);
     }
 
+    // 기본 정보 저장
     @KafkaListener(
             topics = "${kafka-config.consumer.update-topic}",   //basic-info-updated
             groupId = "${kafka-config.consumer.save-groupId}",
@@ -49,8 +44,8 @@ public class BasicInfoSaveConsumer {
     public void saveBasicInfo(ConsumerRecord<String, BasicInfoDto> record, Acknowledgment ack, Consumer<?, ?> consumer) {
         BasicInfoDto dto = record.value();
         try {
-            MedicalFacility findDocument = medicalFacilityMongoRepository.findById(dto.getCode()).orElse(null);
-            saveMedicalFacilityMongo(dto, findDocument);
+            MedicalFacility findDocument = medicalFacilityRepository.findById(dto.getCode()).orElse(null);
+            saveMedicalFacility(dto, findDocument);
             kafkaTemplate.send(kafkaProperties.getDetailTopic(), dto);      //detail-info
             ack.acknowledge();
         } catch (Exception e) {
@@ -59,11 +54,11 @@ public class BasicInfoSaveConsumer {
         }
     }
 
-    private void saveMedicalFacilityMongo(BasicInfoDto dto, MedicalFacility doc) {
+    private void saveMedicalFacility(BasicInfoDto dto, MedicalFacility doc) {
         if (doc == null) {
             BasicInfoDto basicInfoDto = checkCoordinate(dto);
             MedicalFacility saveDoc = convertDtoToDocument(basicInfoDto);
-            medicalFacilityMongoRepository.save(saveDoc);
+            medicalFacilityRepository.save(saveDoc);
             count.incrementAndGet();
             if (count.get() != 0 && count.get() % 500 == 0) {
                 log.info("save count : {}", count.get());
@@ -72,11 +67,11 @@ public class BasicInfoSaveConsumer {
     }
 
     private BasicInfoDto checkCoordinate(BasicInfoDto dto) {
-        if (dto.getCoordinate().equalsExact(dummyPoint)) {
+        GeoJsonPoint coordinate = dto.getCoordinate();
+        if (coordinate != null && coordinate.getX() == 0.0 && coordinate.getY() == 0.0) {
             return mapApiService.getCoordinate(dto);
-        } else {
-            return dto;
         }
+        return dto;
     }
 
     private MedicalFacility convertDtoToDocument(BasicInfoDto dto) {

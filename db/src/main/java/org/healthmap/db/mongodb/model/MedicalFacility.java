@@ -1,12 +1,11 @@
 package org.healthmap.db.mongodb.model;
 
-import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.geom.Point;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
@@ -59,33 +58,29 @@ public class MedicalFacility {
 
     // 차후 제거
     public static MedicalFacility of(String id, String name, String address, String phoneNumber, String url, String type, String state, String city,
-                                     String town, String postNumber, Point coordinate, String parking, String parkingEtc, String treatmentMon,
+                                     String town, String postNumber, GeoJsonPoint coordinate, String parking, String parkingEtc, String treatmentMon,
                                      String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
                                      String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat,
                                      String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight,
                                      LocalDateTime createdAt, LocalDateTime updatedAt
     ) {
-        GeoJsonPoint newCoordinate = new GeoJsonPoint(coordinate.getX(), coordinate.getY());
-
         return new MedicalFacility(
                 id, name, address, phoneNumber, url, type, state, city, town,
-                postNumber, newCoordinate, parking, parkingEtc, treatmentMon, treatmentTue,
+                postNumber, coordinate, parking, parkingEtc, treatmentMon, treatmentTue,
                 treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                 receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun,
                 noTreatmentHoliday, emergencyDay, emergencyNight, createdAt, updatedAt
         );
     }
+
     public static MedicalFacility of(String id, String name, String address, String phoneNumber, String url, String type, String state, String city,
-                                     String town, String postNumber, Point coordinate, String parking, String parkingEtc, String treatmentMon,
+                                     String town, String postNumber, GeoJsonPoint coordinate, String parking, String parkingEtc, String treatmentMon,
                                      String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
                                      String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat,
-                                     String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight)
-    {
-        GeoJsonPoint newCoordinate = new GeoJsonPoint(coordinate.getX(), coordinate.getY());
-
+                                     String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight) {
         return new MedicalFacility(
                 id, name, address, phoneNumber, url, type, state, city, town,
-                postNumber, newCoordinate, parking, parkingEtc, treatmentMon, treatmentTue,
+                postNumber, coordinate, parking, parkingEtc, treatmentMon, treatmentTue,
                 treatmentWed, treatmentThu, treatmentFri, treatmentSat, treatmentSun,
                 receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun,
                 noTreatmentHoliday, emergencyDay, emergencyNight, null, null

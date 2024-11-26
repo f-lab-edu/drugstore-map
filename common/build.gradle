@@ -15,9 +15,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    implementation 'org.hibernate:hibernate-spatial:6.6.0.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.2'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'com.sun.xml.bind:jaxb-core:2.3.0.1'
     implementation 'com.sun.xml.bind:jaxb-impl:2.3.0.1'

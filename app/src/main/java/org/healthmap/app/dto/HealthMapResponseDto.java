@@ -40,14 +40,14 @@ public class HealthMapResponseDto {
     private String noTreatmentHoliday;  // 공휴일 휴진
     private String emergencyDay;
     private String emergencyNight;
-    private double distance;
+    private Double distance;
 
     public static HealthMapResponseDto of(
             String code, String name, String address, String phoneNumber, String pageUrl, String type, String state,
             String city, String town, String postNumber, double latitude, double longitude, String parking, String parkingEtc,
             String treatmentMon, String treatmentTue, String treatmentWed, String treatmentThu, String treatmentFri, String treatmentSat,
             String treatmentSun, String receiveWeek, String receiveSat, String lunchWeek, String lunchSat, String noTreatmentSun,
-            String noTreatmentHoliday, String emergencyDay, String emergencyNight, double distance) {
+            String noTreatmentHoliday, String emergencyDay, String emergencyNight, Double distance) {
         return new HealthMapResponseDto(
                 code, name, address, phoneNumber, pageUrl, type, state, city,
                 town, postNumber, latitude, longitude, parking, parkingEtc, treatmentMon, treatmentTue, treatmentWed,

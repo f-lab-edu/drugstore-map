@@ -58,6 +58,7 @@ public class MapApi {
                 coordinateList.add(y);
             }
         } catch (Exception e) {
+            log.warn(e.getMessage());
             throw new MapApiProblemException(MapApiErrorCode.SERVER_ERROR);
         }
         return coordinateList;

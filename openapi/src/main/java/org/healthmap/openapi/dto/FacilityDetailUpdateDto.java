@@ -35,7 +35,6 @@ public class FacilityDetailUpdateDto {
                                    String noTreatmentSun, String noTreatmentHoliday, String emergencyDay, String emergencyNight
     ) {
         this.code = code;
-
         this.parking = parking;
         this.parkingEtc = parkingEtc;
         this.treatmentMon = treatmentMon;

@@ -2,16 +2,14 @@ package org.healthmap.openapi.api;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
+import org.healthmap.openapi.TestConfig;
 import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-@SpringBootTest
+@SpringBootTest(classes = TestConfig.class)
 class FacilityDetailInfoApiTest {
     @Autowired
     private FacilityDetailInfoApi facilityDetailInfoApi;
@@ -21,7 +19,7 @@ class FacilityDetailInfoApiTest {
     public void getFacilityDetailInfo() {
         String test = "JDQ4MTAxMiM1MSMkMiMkMCMkMDAkMzgxMTkxIzIxIyQxIyQ1IyQ3OSQ0NjEwMDIjNzEjJDEjJDgjJDgz";
 
-        FacilityDetailDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailDtoFromApi(test).join();
+        FacilityDetailDto facilityDetailInfo = facilityDetailInfoApi.getFacilityDetailDtoFromApi(test);
 
         SoftAssertions assertions = new SoftAssertions();
         assertions.assertThat(facilityDetailInfo).isNotNull();
@@ -32,11 +30,10 @@ class FacilityDetailInfoApiTest {
 
     @Test
     @DisplayName("Jackson 라이브러리 동작 하는지 확인")
-    void testJacksonLibrary() throws ExecutionException, InterruptedException {
+    void testJacksonLibrary() {
         String test = "JDQ4MTYyMiM4MSMkMiMkMCMkMDAkMzgxNzAyIzExIyQxIyQzIyQwMyQyNjEyMjIjODEjJDEjJDYjJDgz";
 
-        CompletableFuture<FacilityDetailDto> facilityDetailInfoAsync = facilityDetailInfoApi.getFacilityDetailDtoFromApi(test);
-        FacilityDetailDto facilityDetailJsonDto = facilityDetailInfoAsync.get();
+        FacilityDetailDto facilityDetailJsonDto = facilityDetailInfoApi.getFacilityDetailDtoFromApi(test);
         System.out.println(facilityDetailJsonDto);
         Assertions.assertThat(facilityDetailJsonDto).isNotNull();
     }

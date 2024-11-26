@@ -1,7 +1,6 @@
 package org.healthmap.openapi.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.healthmap.db.mysql.repository.MedicalFacilityMysqlRepository;
 import org.healthmap.openapi.api.FacilityDetailInfoApi;
 import org.healthmap.openapi.dto.FacilityDetailDto;
 import org.healthmap.openapi.dto.FacilityDetailUpdateDto;
@@ -16,15 +15,12 @@ import java.util.Set;
 @Slf4j
 public class FacilityDetailApiService {
     private final FacilityDetailInfoApi facilityDetailInfoApi;
-    private final MedicalFacilityMysqlRepository medicalFacilityRepository;
     private final PatternMatcherManager patternMatcherManager;
 
-    public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, MedicalFacilityMysqlRepository medicalFacilityRepository, PatternMatcherManager patternMatcherManager) {
+    public FacilityDetailApiService(FacilityDetailInfoApi facilityDetailInfoApi, PatternMatcherManager patternMatcherManager) {
         this.facilityDetailInfoApi = facilityDetailInfoApi;
-        this.medicalFacilityRepository = medicalFacilityRepository;
         this.patternMatcherManager = patternMatcherManager;
     }
-
 
     // 1. API로부터 JsonDTO 가져오기
     // 2. jsonDTO를 updateDTO로 변환
@@ -61,7 +57,7 @@ public class FacilityDetailApiService {
         String lunchWeek = changeLunchTime(dto.getLunchWeek());
         String lunchSat = changeLunchTime(dto.getLunchSat());
 
-        return FacilityDetailUpdateDto.of(dto.getCode(),  dto.getParkXpnsYn(),
+        return FacilityDetailUpdateDto.of(dto.getCode(), dto.getParkXpnsYn(),
                 dto.getParkEtc(), treatmentMon, treatmentTue, treatmentWed, treatmentThu, treatmentFri, treatmentSat,
                 treatmentSun, receiveWeek, receiveSat, lunchWeek, lunchSat, noTreatmentSun, noTreatmentHoliday,
                 dto.getEmyDayYn(), dto.getEmyNgtYn());
@@ -125,20 +121,4 @@ public class FacilityDetailApiService {
         }
         return result;
     }
-
-    // DTO로 update하는 메서드
-    private void updateFacilityDetail(FacilityDetailUpdateDto dto) {
-        medicalFacilityRepository.updateDetail(
-                dto.getCode(), dto.getParking(), dto.getParkingEtc(), dto.getTreatmentMon(), dto.getTreatmentTue(), dto.getTreatmentWed(),
-                dto.getTreatmentThu(), dto.getTreatmentFri(), dto.getTreatmentSat(), dto.getTreatmentSun(), dto.getReceiveWeek(),
-                dto.getReceiveSat(), dto.getLunchWeek(), dto.getLunchSat(), dto.getNoTreatmentSun(), dto.getNoTreatmentHoliday(),
-                dto.getEmergencyDay(), dto.getEmergencyNight()
-        );
-    }
-
-    // DB의 id 리스트 반환하는 메서드
-    private List<String> getAllIdList() {
-        return medicalFacilityRepository.findAllId();
-    }
-
 }

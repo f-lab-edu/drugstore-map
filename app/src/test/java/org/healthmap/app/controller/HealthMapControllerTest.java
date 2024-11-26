@@ -16,7 +16,7 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class DrugstoreControllerTest {
+class HealthMapControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -35,16 +35,16 @@ class DrugstoreControllerTest {
     @Test
     @DisplayName("전체 약국 가져오는지 확인")
     public void testFindAllDrugstore() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(baseUrl))
+        mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/all"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Lee"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.address").value("서울시"));
+                .andExpect(MockMvcResultMatchers.content().contentType("application/json;charset=UTF-8"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray());
     }
 
     @Test
     @DisplayName("사용자 근처의 약국 가져오는지 확인")
     public void testFindDrugstoreAround() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/around?longitude=123.11111&latitude=53.222222"))
+        mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/around?x=123.11111&y=53.222222&distance=3"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value("0"));
     }

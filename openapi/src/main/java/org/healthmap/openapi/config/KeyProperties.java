@@ -15,4 +15,5 @@ public class KeyProperties {
         this.kakaoKey = kakaoKey;
         this.roadAddressKey = roadAddressKey;
     }
+
 }

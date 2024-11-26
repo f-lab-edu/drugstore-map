@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.healthmap.app.dto.HealthMapRequestDto;
 import org.healthmap.app.dto.HealthMapResponseDto;
 import org.healthmap.db.mongodb.model.MedicalFacility;
+import org.healthmap.db.mongodb.repository.MedicalFacilityRepository;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResult;
 import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.NearQuery;
 import org.springframework.stereotype.Service;
@@ -20,13 +22,26 @@ import java.util.List;
 @Slf4j
 public class HealthMapService {
     private final MongoTemplate mongoTemplate;
+    private final MedicalFacilityRepository medicalFacilityRepository;
+
+    public List<HealthMapResponseDto> getAllMedicalFacility() {
+        List<MedicalFacility> allFacility = medicalFacilityRepository.findAll();
+        if(!allFacility.isEmpty()) {
+            return allFacility.stream()
+                    .map(x -> convertDocumentToDto(x, null))
+                    .limit(5000)
+                    .toList();
+        } else {
+            return new ArrayList<>();
+        }
+    }
 
     // {requestDto.distance} km 이내의 시설 찾기
-    public List<HealthMapResponseDto> getNearByMedicalFacilityMongo(HealthMapRequestDto requestDto) {
+    public List<HealthMapResponseDto> getNearByMedicalFacility(HealthMapRequestDto requestDto) {
         List<HealthMapResponseDto> healthMapResponseDtoList = new ArrayList<>();
-        org.springframework.data.geo.Point location = new org.springframework.data.geo.Point(requestDto.getX(), requestDto.getY());
+        Point location = new Point(requestDto.getX(), requestDto.getY());
         NearQuery nearQuery = NearQuery.near(location)
-                .maxDistance(new Distance(0.5, Metrics.KILOMETERS))
+                .maxDistance(new Distance(requestDto.getDistance(), Metrics.KILOMETERS))
                 .spherical(true)
                 .limit(50);
         List<GeoResult<MedicalFacility>> result = mongoTemplate.geoNear(nearQuery, MedicalFacility.class).getContent();
@@ -42,7 +57,7 @@ public class HealthMapService {
         return healthMapResponseDtoList;
     }
 
-    private HealthMapResponseDto convertDocumentToDto(MedicalFacility doc, double distance) {
+    private HealthMapResponseDto convertDocumentToDto(MedicalFacility doc, Double distance) {
         return HealthMapResponseDto.of(
                 doc.getId(), doc.getName(), doc.getAddress(), doc.getPhoneNumber(), doc.getUrl(), doc.getType(),
                 doc.getState(), doc.getCity(), doc.getTown(), doc.getPostNumber(), doc.getCoordinate().getX(),
